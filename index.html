@@ -1,0 +1,1858 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lubenec · Diseñador Interno</title>
+<style>
+:root{
+  --negro:#15130F; --crema:#F5F1E8; --arena:#C9C2B4; --blanco:#FFFFFF;
+  --azul:#2563EB; --verde:#059669; --rojo:#DC2626; --naranja:#D97706; --amarillo:#EAB308; --gris:#6B7280; --morado:#9333EA;
+  --panel:#1E1B16; --panel2:#2A2620; --borde:#3A352D;
+}
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Inter',system-ui,-apple-system,sans-serif;}
+body{background:var(--negro);color:var(--crema);height:100vh;overflow:hidden;display:flex;flex-direction:column;}
+
+/* ===== HEADER ===== */
+header{display:flex;align-items:center;justify-content:space-between;padding:10px 18px;background:var(--panel);border-bottom:1px solid var(--borde);flex-shrink:0;}
+header h1{font-size:15px;letter-spacing:2px;font-weight:800;}
+header h1 span{color:var(--azul);}
+.header-actions{display:flex;gap:8px;}
+.btn{background:var(--panel2);color:var(--crema);border:1px solid var(--borde);padding:8px 14px;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;transition:.15s;display:flex;align-items:center;gap:6px;}
+.btn:hover{background:var(--borde);}
+.btn-primary{background:var(--azul);border-color:var(--azul);color:#fff;}
+.btn-primary:hover{background:#1d4ed8;}
+.btn-success{background:var(--verde);border-color:var(--verde);color:#fff;}
+.btn-success:hover{background:#047857;}
+
+/* ===== LAYOUT ===== */
+.layout{flex:1;display:flex;min-height:0;}
+.toolbar{width:64px;background:var(--panel);border-right:1px solid var(--borde);display:flex;flex-direction:column;align-items:center;padding:10px 0;gap:6px;flex-shrink:0;}
+.tool-btn{width:46px;height:46px;border-radius:8px;background:var(--panel2);border:1px solid var(--borde);color:var(--crema);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.15s;position:relative;}
+.tool-btn:hover{background:var(--borde);}
+.tool-btn.active{background:var(--azul);border-color:var(--azul);}
+.tool-btn .dot{width:14px;height:14px;border-radius:50%;}
+.tool-sep{width:36px;height:1px;background:var(--borde);margin:4px 0;}
+
+.canvas-wrap{flex:1;position:relative;overflow:auto;background:#0a0907;display:flex;align-items:center;justify-content:center;}
+.canvas-stack{position:relative;transform-origin:center center;}
+canvas{position:absolute;top:0;left:0;}
+#bgCanvas{z-index:1;}
+#drawCanvas{z-index:2;cursor:crosshair;}
+#drawCanvas.tool-select{cursor:default;}
+#drawCanvas.tool-select.dragging{cursor:grabbing;}
+
+.zoom-indicator{position:absolute;bottom:10px;left:10px;background:#15130Fcc;color:#fff;font-size:11px;font-weight:700;padding:4px 9px;border-radius:6px;border:1px solid var(--borde);z-index:6;}
+
+.empty-state{color:var(--arena);text-align:center;padding:40px;}
+.empty-state .big-icon{font-size:64px;margin-bottom:16px;opacity:.4;}
+
+/* Sidebar */
+.sidebar{width:340px;background:var(--panel);border-left:1px solid var(--borde);display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto;}
+.sidebar-section{padding:14px 16px;border-bottom:1px solid var(--borde);}
+.sidebar-section h3{font-size:11px;letter-spacing:1.5px;color:var(--arena);font-weight:800;margin-bottom:10px;text-transform:uppercase;}
+
+.opacity-row{display:flex;align-items:center;gap:10px;font-size:12px;}
+.opacity-row input[type=range]{flex:1;}
+
+.calib-row{display:flex;gap:6px;margin-top:8px;}
+.calib-row input{flex:1;background:var(--panel2);border:1px solid var(--borde);color:var(--crema);padding:6px 8px;border-radius:6px;font-size:12px;}
+.small-note{font-size:10px;color:var(--arena);opacity:.7;margin-top:6px;line-height:1.4;}
+
+/* Budget table */
+.budget-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;font-size:12px;border-bottom:1px solid var(--borde);}
+.budget-row:last-child{border-bottom:none;}
+.budget-row .label{color:var(--arena);}
+.budget-row .val{font-weight:700;}
+.budget-cat{font-size:10px;letter-spacing:1.5px;color:var(--azul);font-weight:800;margin:10px 0 4px;text-transform:uppercase;}
+.budget-total{display:flex;justify-content:space-between;align-items:center;padding:12px 0;font-size:16px;font-weight:800;margin-top:8px;border-top:2px solid var(--azul);}
+.budget-total .val{color:var(--azul);}
+
+.price-edit-row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:4px 0;font-size:11px;}
+.price-edit-row input{width:70px;background:var(--panel2);border:1px solid var(--borde);color:var(--crema);padding:4px 6px;border-radius:4px;font-size:11px;text-align:right;}
+
+.toggle-prices{cursor:pointer;font-size:11px;color:var(--azul);font-weight:700;}
+
+/* Grid mode */
+.grid-row{display:flex;align-items:center;gap:8px;font-size:12px;margin-top:8px;}
+.grid-row input[type=number]{width:60px;background:var(--panel2);border:1px solid var(--borde);color:var(--crema);padding:5px 6px;border-radius:6px;font-size:12px;}
+.checkbox-row{display:flex;align-items:center;gap:6px;font-size:12px;margin-top:8px;cursor:pointer;user-select:none;}
+.live-len-badge{position:absolute;background:#15130Fcc;color:#fff;font-size:11px;font-weight:700;padding:3px 7px;border-radius:5px;pointer-events:none;border:1px solid var(--borde);z-index:5;}
+
+
+/* legend */
+.legend{display:flex;flex-wrap:wrap;gap:8px;font-size:10px;}
+.legend-item{display:flex;align-items:center;gap:4px;color:var(--arena);}
+.legend-item .sw{width:12px;height:12px;border-radius:3px;}
+
+/* Modal for dossier */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;z-index:100;}
+.modal-overlay.open{display:flex;}
+.modal-box{background:var(--crema);color:var(--negro);width:90%;max-width:700px;max-height:85vh;overflow-y:auto;border-radius:10px;padding:24px;}
+.modal-box h2{font-size:20px;margin-bottom:16px;}
+.modal-box img{width:100%;border-radius:6px;margin-bottom:10px;border:1px solid #ccc;}
+.dossier-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;}
+.dossier-grid .lbl{font-size:11px;font-weight:800;letter-spacing:1px;color:#555;margin-bottom:4px;}
+.modal-close-x{position:absolute;top:14px;right:18px;background:none;border:none;font-size:20px;cursor:pointer;color:var(--arena);}
+
+.status-pill{font-size:10px;padding:3px 8px;border-radius:10px;background:var(--panel2);border:1px solid var(--borde);color:var(--arena);}
+.status-pill.ok{color:var(--verde);border-color:var(--verde);}
+.header-sep{width:1px;height:22px;background:var(--borde);margin:0 2px;}
+
+/* ===== GUÍA DE PASOS ===== */
+.workflow-bar{display:flex;align-items:center;gap:2px;padding:9px 18px;background:var(--panel2);border-bottom:1px solid var(--borde);flex-shrink:0;overflow-x:auto;}
+.wf-step{display:flex;align-items:center;gap:7px;padding:5px 12px;border-radius:20px;font-size:12px;font-weight:700;color:var(--arena);white-space:nowrap;transition:.15s;}
+.wf-step .num{width:19px;height:19px;border-radius:50%;background:var(--borde);color:var(--crema);display:flex;align-items:center;justify-content:center;font-size:10.5px;flex-shrink:0;transition:.15s;}
+.wf-step.active{color:#fff;background:#2563EB2a;}
+.wf-step.active .num{background:var(--azul);}
+.wf-step.done .num{background:var(--verde);}
+.wf-step.done .num::before{content:'✓';}
+.wf-step.done{color:var(--verde);}
+.wf-arrow{color:var(--borde);font-size:13px;padding:0 1px;flex-shrink:0;}
+.wf-hint{margin-left:auto;font-size:11.5px;color:var(--arena);opacity:.9;max-width:360px;text-align:right;padding-left:16px;flex-shrink:0;}
+
+/* ===== TOOLBAR CON ETIQUETAS ===== */
+.toolbar{width:190px;}
+.tool-group-label{font-size:9.5px;letter-spacing:1.3px;color:var(--arena);opacity:.6;text-transform:uppercase;font-weight:800;margin:10px 6px 3px;align-self:flex-start;}
+.tool-group-label:first-child{margin-top:2px;}
+.tool-btn{width:100%;height:38px;justify-content:flex-start;padding:0 10px;gap:10px;border-radius:7px;}
+.tool-btn .ico{font-size:16px;width:18px;text-align:center;flex-shrink:0;}
+.tool-btn .lbl{font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.tool-btn .dot{width:13px;height:13px;border-radius:50%;flex-shrink:0;}
+.tool-btn.active .lbl,.tool-btn.active .ico{color:#fff;}
+
+/* ===== AYUDA COLAPSABLE / ATENCIÓN ===== */
+.needs-attention{border-color:var(--naranja) !important;box-shadow:0 0 0 1px var(--naranja) inset;animation:attnPulse 2s ease-in-out infinite;}
+@keyframes attnPulse{0%,100%{background:var(--panel);}50%{background:#D977061a;}}
+.step-badge{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;background:var(--azul);color:#fff;font-size:9px;font-weight:800;margin-right:6px;flex-shrink:0;}
+.sidebar-section h3{display:flex;align-items:center;}
+
+/* ===== TOASTS (avisos no intrusivos) ===== */
+.toast-container{position:fixed;bottom:20px;right:20px;display:flex;flex-direction:column;gap:8px;z-index:300;max-width:340px;}
+.toast{background:var(--panel2);border:1px solid var(--azul);color:var(--crema);padding:11px 16px;border-radius:8px;font-size:12.5px;font-weight:600;line-height:1.4;box-shadow:0 4px 14px rgba(0,0,0,.45);animation:toastIn .25s ease;}
+.toast.warn{border-color:var(--naranja);}
+.toast.ok{border-color:var(--verde);}
+@keyframes toastIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>LUBENEC <span>DISEÑADOR</span> INTERNO</h1>
+  <div class="header-actions">
+    <span class="status-pill" id="connStatus">⏳ Esperando datos de Lubenec Contigo…</span>
+    <span class="header-sep"></span>
+    <button class="btn" id="btnUpload">📁 Subir Plano Base</button>
+    <input type="file" id="fileInput" accept="image/*,application/pdf" style="display:none">
+    <button class="btn" id="btnBlank">✏️ Dibujar desde cero</button>
+    <span class="header-sep"></span>
+    <button class="btn btn-primary" id="btnDossier" title="Genera el dossier cuando tengas un plano y algún elemento dibujado">📄 Generar Dossier para Cliente</button>
+    <button class="btn btn-success" id="btnSend" title="Envía el resultado a Lubenec Contigo cuando tengas un plano y algún elemento dibujado">⬆️ Enviar a Lubenec Contigo</button>
+  </div>
+</header>
+
+<div class="workflow-bar" id="workflowBar">
+  <div class="wf-step" id="wfStep1"><span class="num">1</span> Sube el plano</div>
+  <span class="wf-arrow">→</span>
+  <div class="wf-step" id="wfStep2"><span class="num">2</span> Calibra la escala</div>
+  <span class="wf-arrow">→</span>
+  <div class="wf-step" id="wfStep3"><span class="num">3</span> Diseña la reforma</div>
+  <span class="wf-arrow">→</span>
+  <div class="wf-step" id="wfStep4"><span class="num">4</span> Dossier / Enviar</div>
+  <div class="wf-hint" id="wfHint">Empieza subiendo un plano o pulsa "Dibujar desde cero".</div>
+</div>
+
+<div class="layout">
+  <!-- TOOLBAR -->
+  <div class="toolbar">
+    <div class="tool-group-label">Navegar</div>
+    <button class="tool-btn active" data-tool="select" title="Seleccionar / Mover"><span class="ico">↖️</span><span class="lbl">Seleccionar</span></button>
+    <button class="tool-btn" data-tool="calibrate" title="Calibrar escala"><span class="ico">📏</span><span class="lbl">Calibrar</span></button>
+
+    <div class="tool-group-label">Estructura</div>
+    <button class="tool-btn" data-tool="planoBase" title="Muro existente / plano base"><span class="dot" style="background:var(--gris)"></span><span class="lbl">Muro existente</span></button>
+    <button class="tool-btn" data-tool="demolicion" title="Tirar tabique"><span class="dot" style="background:var(--rojo)"></span><span class="lbl">Tirar tabique</span></button>
+    <button class="tool-btn" data-tool="muro" title="Levantar muro nuevo"><span class="dot" style="background:var(--verde)"></span><span class="lbl">Muro nuevo</span></button>
+    <button class="tool-btn" data-tool="puerta" title="Puerta"><span class="dot" style="background:var(--naranja)"></span><span class="lbl">Puerta</span></button>
+
+    <div class="tool-group-label">Instalaciones</div>
+    <button class="tool-btn" data-tool="luz" title="Punto de luz"><span class="dot" style="background:var(--amarillo)"></span><span class="lbl">Punto de luz</span></button>
+    <button class="tool-btn" data-tool="agua" title="Punto de agua"><span class="dot" style="background:var(--azul)"></span><span class="lbl">Punto de agua</span></button>
+
+    <div class="tool-group-label">Mobiliario</div>
+    <button class="tool-btn" data-tool="mobiliario" title="Mobiliario (arrastra para dibujar el hueco)"><span class="ico">🛋️</span><span class="lbl">Colocar mueble</span></button>
+
+    <div class="tool-group-label">Editar</div>
+    <button class="tool-btn" id="btnUndo" title="Deshacer último"><span class="ico">↩️</span><span class="lbl">Deshacer</span></button>
+    <button class="tool-btn" id="btnDeleteSel" title="Eliminar elemento seleccionado"><span class="ico">🗑️</span><span class="lbl">Eliminar sel.</span></button>
+    <button class="tool-btn" id="btnClear" title="Borrar todo lo dibujado"><span class="ico">🧹</span><span class="lbl">Borrar todo</span></button>
+
+    <div class="tool-group-label">Vista</div>
+    <button class="tool-btn" id="btnZoomIn" title="Acercar (+)"><span class="ico">➕</span><span class="lbl">Acercar</span></button>
+    <button class="tool-btn" id="btnZoomOut" title="Alejar (−)"><span class="ico">➖</span><span class="lbl">Alejar</span></button>
+    <button class="tool-btn" id="btnZoomReset" title="Restablecer zoom"><span class="ico">🔍</span><span class="lbl">Restablecer</span></button>
+    <button class="tool-btn" id="btn3DView" title="Ver la distribución en 3D"><span class="ico">🧊</span><span class="lbl">Ver en 3D</span></button>
+
+    <div class="tool-group-label">Mobiliario</div>
+    <button class="tool-btn" id="btnRotateLeft" title="Rotar mueble seleccionado 15° a la izquierda"><span class="ico">⟲</span><span class="lbl">Rotar izq.</span></button>
+    <button class="tool-btn" id="btnRotateRight" title="Rotar mueble seleccionado 15° a la derecha"><span class="ico">⟳</span><span class="lbl">Rotar der.</span></button>
+  </div>
+
+  <!-- CANVAS -->
+  <div class="canvas-wrap" id="canvasWrap">
+    <div class="empty-state" id="emptyState">
+      <div class="big-icon">📐</div>
+      <div>Sube un plano (imagen o PDF) para empezar a maquetar la reforma.</div>
+    </div>
+    <div class="canvas-stack" id="canvasStack" style="display:none;">
+      <canvas id="bgCanvas"></canvas>
+      <canvas id="drawCanvas"></canvas>
+      <div class="live-len-badge" id="liveLenBadge" style="display:none;"></div>
+      <div class="zoom-indicator" id="zoomIndicator">100%</div>
+    </div>
+  </div>
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-section">
+      <h3>Capa "El Antes"</h3>
+      <div class="opacity-row">
+        <span>Opacidad plano</span>
+        <input type="range" id="opacitySlider" min="0" max="100" value="100">
+        <span id="opacityVal">100%</span>
+      </div>
+    </div>
+
+    <div class="sidebar-section" id="calibSection">
+      <h3><span class="step-badge">2</span>Calibración de escala</h3>
+      <div class="small-note">Selecciona la herramienta 📏 <b>Calibrar</b>, dibuja una línea sobre un elemento de longitud conocida del plano (por ejemplo una pared de 3 m), y escribe a continuación a cuántos metros equivale.</div>
+      <div class="calib-row">
+        <input type="number" id="calibMeters" placeholder="metros reales" step="0.01">
+        <button class="btn" id="btnCalibApply">Aplicar</button>
+      </div>
+      <div class="small-note" id="calibStatus">Sin calibrar — las medidas se mostrarán en píxeles.</div>
+
+      <div class="grid-row" id="snapStepRow" style="display:none;">
+        <span>Precisión de ajuste</span>
+        <select id="snapStep" style="background:var(--panel2);border:1px solid var(--borde);color:var(--crema);padding:5px 6px;border-radius:6px;font-size:12px;">
+          <option value="1">1 m</option>
+          <option value="0.5" selected>0,5 m</option>
+          <option value="0.25">0,25 m</option>
+        </select>
+      </div>
+      <label class="checkbox-row" id="snapToggleRow" style="display:none;"><input type="checkbox" id="snapToggle" checked> Ajustar a cuadrícula (snap)</label>
+      <label class="checkbox-row" id="gridVisibleRow" style="display:none;"><input type="checkbox" id="gridVisibleToggle" checked> Mostrar cuadrícula</label>
+      <div class="small-note" id="obliqueNote" style="display:none;margin-top:6px;">↗️ Las paredes pueden trazarse en cualquier ángulo (oblicuas): arrastra el punto de inicio al de fin libremente, el ajuste solo fija cada extremo a la cuadrícula elegida, no la dirección de la línea.</div>
+
+      <div id="gridControls" style="display:none;">
+        <div class="small-note" style="margin-top:10px;">Modo dibujo desde cero: define directamente cuántos píxeles equivalen a 1 metro y activa la cuadrícula para dibujar con precisión.</div>
+        <div class="grid-row">
+          <span>1 metro =</span>
+          <input type="number" id="gridPxPerMeter" value="60" min="10" step="1">
+          <span>px</span>
+          <button class="btn" id="btnGridApply">Aplicar</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <h3><span class="step-badge">3</span>Diseña la reforma — Leyenda</h3>
+      <div class="legend">
+        <div class="legend-item"><span class="sw" style="background:var(--gris)"></span> Muro existente (plano base)</div>
+        <div class="legend-item"><span class="sw" style="background:var(--rojo)"></span> Tirar tabique</div>
+        <div class="legend-item"><span class="sw" style="background:var(--verde)"></span> Muro nuevo</div>
+        <div class="legend-item"><span class="sw" style="background:var(--amarillo)"></span> Punto de luz</div>
+        <div class="legend-item"><span class="sw" style="background:var(--azul)"></span> Punto de agua</div>
+        <div class="legend-item"><span class="sw" style="background:var(--naranja)"></span> Puerta</div>
+        <div class="legend-item"><span class="sw" style="background:var(--morado)"></span> Mobiliario</div>
+      </div>
+      <div class="toggle-prices" id="toggleHelp" style="margin-top:10px;">❔ Cómo usar cada herramienta</div>
+      <div class="small-note" id="helpText" style="display:none;margin-top:10px;">
+        📐 <b>Muro existente</b>: si no tienes plano para subir, usa "✏️ Dibujar desde cero" y traza primero los muros/perímetro reales de la vivienda con esta herramienta (no suma al presupuesto, es solo el estado actual). Después añade tabiques a tirar, muros nuevos, luces y agua sobre ese plano base.<br><br>
+        🚪 <b>Puerta</b>: dibuja una línea sobre el hueco del muro; se representa con su símbolo de apertura (abanico).<br><br>
+        🛋️ <b>Mobiliario</b>: elige el tipo en "Mobiliario a colocar" (abajo) y arrastra en el plano para dibujar su hueco al tamaño real; no suma al presupuesto, es solo para maquetar la distribución.<br><br>
+        🖱️ <b>↖️ Seleccionar/Mover</b>: haz clic en un elemento para seleccionarlo (se resalta), arrastra sus extremos/esquinas para editarlo o arrástralo entero para moverlo. Pulsa <b>Supr</b> o el botón 🗑️ Eliminar sel. para eliminarlo.<br><br>
+        🔍 Zoom: usa los botones ➕/➖, rueda del ratón sobre el plano (con Ctrl/Cmd), o restablece con 🔍.
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <h3>Mobiliario a colocar</h3>
+      <div class="grid-row" style="margin-top:0;">
+        <select id="furnitureType" style="flex:1;background:var(--panel2);border:1px solid var(--borde);color:var(--crema);padding:6px 8px;border-radius:6px;font-size:12px;"></select>
+      </div>
+      <div class="small-note" id="furnitureSizeHint" style="color:var(--crema);font-weight:700;margin-top:6px;"></div>
+      <div class="small-note">Elige el tipo, activa la herramienta 🛋️ Colocar mueble y luego, sobre el plano: <b>un clic</b> lo coloca a su tamaño estándar, o <b>arrastra</b> para dibujarlo a tu medida exacta.</div>
+    </div>
+
+    <div class="sidebar-section">
+      <h3>Resumen de mediciones</h3>
+      <div id="measureSummary" style="font-size:12px;line-height:1.6;color:var(--arena);">Aún no hay elementos dibujados.</div>
+    </div>
+
+    <div class="sidebar-section" style="flex:1;">
+      <h3><span class="step-badge">4</span>Presupuesto en tiempo real</h3>
+      <div id="budgetOutput"></div>
+      <div style="margin-top:10px;" class="toggle-prices" id="togglePrices">⚙️ Editar precios unitarios y mano de obra</div>
+      <div id="priceEditor" style="display:none;margin-top:10px;"></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- DOSSIER MODAL -->
+<div class="modal-overlay" id="dossierOverlay">
+  <div class="modal-box" style="position:relative;">
+    <button class="modal-close-x" id="closeDossier">✕</button>
+    <h2>Dossier de Reforma — Propuesta</h2>
+    <div class="dossier-grid">
+      <div>
+        <div class="lbl">ANTES</div>
+        <img id="dossierBefore" alt="Antes">
+      </div>
+      <div>
+        <div class="lbl">DESPUÉS (propuesta)</div>
+        <img id="dossierAfter" alt="Después">
+      </div>
+    </div>
+    <div class="lbl" style="margin-bottom:6px;">PRESUPUESTO</div>
+    <div id="dossierBudget" style="font-size:13px;line-height:1.7;"></div>
+    <div style="margin-top:16px;display:flex;gap:10px;">
+      <button class="btn btn-primary" id="btnDownloadDossier">⬇️ Descargar imágenes</button>
+    </div>
+  </div>
+</div>
+
+<!-- VISTA 3D MODAL -->
+<div class="modal-overlay" id="view3DOverlay">
+  <div class="modal-box" style="position:relative;background:var(--panel);color:var(--crema);width:94%;max-width:1100px;height:88vh;max-height:88vh;padding:0;display:flex;flex-direction:column;">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--borde);flex-shrink:0;">
+      <h2 style="font-size:15px;margin:0;">🧊 Distribución en 3D</h2>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <label class="checkbox-row" style="margin-top:0;" for="autoRotate3D"><input type="checkbox" id="autoRotate3D"> Rotación automática</label>
+        <button class="btn" id="btnReset3DCam">🔄 Restablecer cámara</button>
+        <button class="btn" id="closeView3D">✕ Cerrar</button>
+      </div>
+    </div>
+    <div id="view3DContainer" style="flex:1;position:relative;background:#0a0907;min-height:0;">
+      <canvas id="canvas3D" style="width:100%;height:100%;display:block;"></canvas>
+      <div id="view3DEmpty" style="position:absolute;inset:0;display:none;align-items:center;justify-content:center;text-align:center;color:var(--arena);padding:30px;">
+        Calibra primero la escala del plano (paso 2) y añade algún elemento para poder ver la distribución en 3D.
+      </div>
+      <div class="small-note" style="position:absolute;bottom:10px;left:14px;color:var(--arena);background:#15130Fcc;padding:6px 10px;border-radius:6px;">
+        🖱️ Arrastra para orbitar · rueda para zoom · clic derecho para desplazar
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Three.js (vista 3D) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+<!-- PDF.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+/* ============================================================
+   ESTADO GLOBAL
+   ============================================================ */
+const state = {
+  bgImage: null,          // HTMLImageElement del plano
+  bgOpacity: 1,
+  scalePxPerMeter: null,  // calibración
+  currentTool: 'select',
+  elements: [],           // {tool, x1,y1,x2,y2, lengthM}
+  drawing: false,
+  startPt: null,
+  obraId: null,           // recibido de Lubenec Contigo
+  obraName: '',
+  cliente: '',
+  blankMode: false,       // true cuando se dibuja desde cero (sin plano)
+  snap: true,
+  snapFraction: 0.5,      // fracción de metro a la que se ajusta el snap (1, 0.5, 0.25)
+  showGrid: true,
+  zoom: 1,
+  selectedIndex: -1,      // índice del elemento seleccionado en state.elements
+  dragMode: null,         // 'move' | 'p1' | 'p2' | null
+  dragOffset: null,
+  furnitureType: 'sofa3',  // tipo de mobiliario seleccionado en el desplegable
+};
+
+/* Catálogo de mobiliario, agrupado por categoría, con tamaño estándar orientativo (en metros)
+   heightM: alto orientativo de la pieza en metros, usado sólo para la vista 3D */
+const FURNITURE_CATALOG = [
+  // Dormitorio
+  { id:'camaIndiv',     label:'Cama individual',        emoji:'🛏️', cat:'Dormitorio', sizeM:{w:0.90,h:1.90}, heightM:0.55 },
+  { id:'camaNido',       label:'Cama nido',               emoji:'🛏️', cat:'Dormitorio', sizeM:{w:0.80,h:1.90}, heightM:0.55 },
+  { id:'camaDoble',      label:'Cama doble',              emoji:'🛏️', cat:'Dormitorio', sizeM:{w:1.35,h:1.90}, heightM:0.55 },
+  { id:'camaMatrimonio', label:'Cama de matrimonio',      emoji:'🛏️', cat:'Dormitorio', sizeM:{w:1.50,h:2.00}, heightM:0.55 },
+  { id:'camaKing',       label:'Cama king size',          emoji:'🛏️', cat:'Dormitorio', sizeM:{w:1.80,h:2.00}, heightM:0.55 },
+  { id:'litera',         label:'Litera',                  emoji:'🛏️', cat:'Dormitorio', sizeM:{w:0.90,h:1.90}, heightM:1.70 },
+  { id:'cuna',           label:'Cuna infantil',           emoji:'🍼', cat:'Dormitorio', sizeM:{w:0.60,h:1.20}, heightM:0.90 },
+
+  // Salón
+  { id:'sofa2',       label:'Sofá 2 plazas',           emoji:'🛋️', cat:'Salón', sizeM:{w:1.60,h:0.90}, heightM:0.80 },
+  { id:'sofa3',       label:'Sofá 3 plazas',           emoji:'🛋️', cat:'Salón', sizeM:{w:2.10,h:0.90}, heightM:0.80 },
+  { id:'chaiseLongue',label:'Sofá rinconera / chaise', emoji:'🛋️', cat:'Salón', sizeM:{w:2.60,h:1.60}, heightM:0.80 },
+  { id:'sillon',      label:'Sillón',                  emoji:'🪑', cat:'Salón', sizeM:{w:0.80,h:0.80}, heightM:0.85 },
+  { id:'mesa',        label:'Mesa / comedor',          emoji:'🍽️', cat:'Salón', sizeM:{w:1.40,h:0.90}, heightM:0.75 },
+
+  // Almacenaje
+  { id:'armarioRopero',    label:'Armario ropero',          emoji:'🗄️', cat:'Almacenaje', sizeM:{w:1.20,h:0.60}, heightM:2.00 },
+  { id:'armarioEmpotrado', label:'Armario empotrado',       emoji:'🗄️', cat:'Almacenaje', sizeM:{w:2.00,h:0.60}, heightM:2.40 },
+  { id:'vestidor',         label:'Vestidor',                emoji:'🚪', cat:'Almacenaje', sizeM:{w:2.20,h:1.80}, heightM:2.20 },
+  { id:'estantePared',     label:'Estante de pared',        emoji:'📚', cat:'Almacenaje', sizeM:{w:0.90,h:0.25}, heightM:0.05 },
+  { id:'estanteria',       label:'Estantería / librería',   emoji:'📚', cat:'Almacenaje', sizeM:{w:0.80,h:0.35}, heightM:1.80 },
+
+  // Baño
+  { id:'inodoro', label:'Inodoro',        emoji:'🚽', cat:'Baño', sizeM:{w:0.40,h:0.65}, heightM:0.40 },
+  { id:'bide',    label:'Bidé',           emoji:'🚿', cat:'Baño', sizeM:{w:0.40,h:0.55}, heightM:0.40 },
+  { id:'lavabo',  label:'Lavabo',         emoji:'🪥', cat:'Baño', sizeM:{w:0.60,h:0.45}, heightM:0.85 },
+  { id:'ducha',   label:'Ducha',          emoji:'🚿', cat:'Baño', sizeM:{w:0.90,h:0.90}, heightM:0.05 },
+  { id:'banera',  label:'Bañera',         emoji:'🛁', cat:'Baño', sizeM:{w:1.70,h:0.75}, heightM:0.55 },
+  { id:'espejo',  label:'Espejo de pared',emoji:'🪞', cat:'Baño', sizeM:{w:0.70,h:0.10}, heightM:0.70 },
+
+  // Cocina
+  { id:'cocina', label:'Módulo cocina', emoji:'🍳', cat:'Cocina', sizeM:{w:2.00,h:0.60}, heightM:0.90 },
+  { id:'isla',   label:'Isla de cocina',emoji:'🍳', cat:'Cocina', sizeM:{w:1.20,h:0.90}, heightM:0.90 },
+  { id:'nevera', label:'Nevera',        emoji:'🧊', cat:'Cocina', sizeM:{w:0.70,h:0.70}, heightM:1.80 },
+
+  // Oficina
+  { id:'escritorio', label:'Escritorio',        emoji:'💻', cat:'Oficina', sizeM:{w:1.20,h:0.60}, heightM:0.75 },
+  { id:'sillaEscritorio', label:'Silla de escritorio', emoji:'🪑', cat:'Oficina', sizeM:{w:0.55,h:0.55}, heightM:0.90 },
+
+  // Otros
+  { id:'otro', label:'Otro', emoji:'🔲', cat:'Otros', sizeM:{w:0.80,h:0.80}, heightM:0.80 },
+];
+const FURNITURE_CATEGORIES = ['Dormitorio','Salón','Almacenaje','Baño','Cocina','Oficina','Otros'];
+
+/* Precios unitarios editables */
+const PRECIOS = {
+  demolicionMetro: 18,        // €/m lineal tabique tirado
+  muroMetro: 65,               // €/m lineal muro nuevo (incluye material+mano de obra base)
+  pladurM2: 28,                // €/m² pladur
+  pinturaM2: 9,                 // €/m² pintura
+  tarimaM2: 38,                 // €/m² tarima
+  puntoLuz: 95,                  // € por punto de luz
+  puntoAgua: 140,                // € por punto de agua
+  puertaUd: 220,                  // € por puerta instalada (incluye marco + hoja + mano de obra material)
+  margenPct: 22,                  // % margen sobre coste
+};
+
+/* Equipo recibido de Lubenec Contigo (o por defecto) */
+let EQUIPO_RECIBIDO = [
+  { name: 'Juan Albañil', role: 'Albañil', costeHora: 22 },
+  { name: 'Carlos Moya', role: 'Electricista', costeHora: 28 },
+  { name: 'Iván Torres', role: 'Fontanero', costeHora: 26 },
+  { name: 'Sara López', role: 'Arquitecta', costeHora: 40 },
+];
+
+/* Horas estimadas por unidad de trabajo (para mano de obra) */
+const HORAS = {
+  demolicionMetroHoras: 0.6,   // horas albañil por metro de tabique
+  muroMetroHoras: 1.4,          // horas albañil por metro de muro nuevo
+  pladurM2Horas: 0.5,
+  pintarM2Horas: 0.25,
+  tarimaM2Horas: 0.6,
+  puntoLuzHoras: 1.2,            // electricista
+  puntoAguaHoras: 1.8,           // fontanero
+  puertaHoras: 1.5,              // albañil/carpintero por puerta instalada
+};
+
+/* ============================================================
+   CANVAS SETUP
+   ============================================================ */
+const bgCanvas = document.getElementById('bgCanvas');
+const drawCanvas = document.getElementById('drawCanvas');
+const bgCtx = bgCanvas.getContext('2d');
+const drawCtx = drawCanvas.getContext('2d');
+const canvasStack = document.getElementById('canvasStack');
+const emptyState = document.getElementById('emptyState');
+
+/* ============================================================
+   AVISOS (toasts, en vez de alert() bruscos)
+   ============================================================ */
+function toast(msg, type=''){
+  const c = document.getElementById('toastContainer');
+  const t = document.createElement('div');
+  t.className = 'toast' + (type ? ' '+type : '');
+  t.textContent = msg;
+  c.appendChild(t);
+  setTimeout(()=>{
+    t.style.opacity = '0';
+    t.style.transition = 'opacity .3s';
+    setTimeout(()=>t.remove(), 300);
+  }, 4200);
+}
+
+/* ============================================================
+   GUÍA DE PASOS (barra superior)
+   ============================================================ */
+function updateWorkflowStep(){
+  const s1 = document.getElementById('wfStep1');
+  const s2 = document.getElementById('wfStep2');
+  const s3 = document.getElementById('wfStep3');
+  const s4 = document.getElementById('wfStep4');
+  const hint = document.getElementById('wfHint');
+  const calibSection = document.getElementById('calibSection');
+  [s1,s2,s3,s4].forEach(s=>s.classList.remove('active','done'));
+
+  const hasPlan = !!state.bgImage || state.blankMode;
+  const hasScale = !!state.scalePxPerMeter;
+  const hasDesign = state.elements.some(e=>e.tool!=='calibrate' && e.tool!=='planoBase');
+
+  let attention = false;
+  if(!hasPlan){
+    s1.classList.add('active');
+    hint.textContent = 'Empieza subiendo un plano o pulsa "✏️ Dibujar desde cero".';
+  } else if(!hasScale){
+    s1.classList.add('done'); s2.classList.add('active');
+    hint.textContent = 'Traza una línea con 📏 Calibrar sobre algo de longitud conocida y aplica la escala.';
+    attention = true;
+  } else if(!hasDesign){
+    s1.classList.add('done'); s2.classList.add('done'); s3.classList.add('active');
+    hint.textContent = 'Usa las herramientas de la izquierda para marcar la reforma sobre el plano.';
+  } else {
+    s1.classList.add('done'); s2.classList.add('done'); s3.classList.add('done'); s4.classList.add('active');
+    hint.textContent = 'Todo listo: genera el dossier o envíalo a Lubenec Contigo.';
+  }
+  if(calibSection) calibSection.classList.toggle('needs-attention', attention);
+}
+
+/* Rellenar el desplegable de tipos de mobiliario */
+(function initFurnitureSelect(){
+  const sel = document.getElementById('furnitureType');
+  sel.innerHTML = FURNITURE_CATEGORIES.map(cat=>{
+    const opts = FURNITURE_CATALOG.filter(f=>f.cat===cat)
+      .map(f=>`<option value="${f.id}">${f.emoji} ${f.label} (${f.sizeM.w.toFixed(2)}×${f.sizeM.h.toFixed(2)} m)</option>`).join('');
+    return `<optgroup label="${cat}">${opts}</optgroup>`;
+  }).join('');
+  sel.value = state.furnitureType;
+  sel.addEventListener('change', e=>{ state.furnitureType = e.target.value; updateFurnitureHint(); });
+})();
+
+function updateFurnitureHint(){
+  const info = FURNITURE_CATALOG.find(f=>f.id===state.furnitureType);
+  const hint = document.getElementById('furnitureSizeHint');
+  if(!hint || !info) return;
+  hint.textContent = `Tamaño estándar: ${info.sizeM.w.toFixed(2)} × ${info.sizeM.h.toFixed(2)} m`;
+}
+updateFurnitureHint();
+
+document.getElementById('toggleHelp').addEventListener('click', ()=>{
+  const el = document.getElementById('helpText');
+  el.style.display = el.style.display==='none' ? 'block' : 'none';
+});
+
+const COLORS = {
+  demolicion: '#DC2626',
+  muro: '#059669',
+  luz: '#EAB308',
+  agua: '#2563EB',
+  planoBase: '#6B7280',
+  puerta: '#D97706',
+  mobiliario: '#9333EA',
+};
+
+function setCanvasSize(w, h){
+  [bgCanvas, drawCanvas].forEach(c=>{ c.width=w; c.height=h; c.style.width=w+'px'; c.style.height=h+'px'; });
+  canvasStack.style.width = w+'px';
+  canvasStack.style.height = h+'px';
+}
+
+function renderBg(){
+  bgCtx.clearRect(0,0,bgCanvas.width,bgCanvas.height);
+  if(state.blankMode){
+    bgCtx.fillStyle = '#FFFFFF';
+    bgCtx.fillRect(0,0,bgCanvas.width,bgCanvas.height);
+  }
+  if(state.bgImage){
+    bgCtx.globalAlpha = state.bgOpacity;
+    bgCtx.drawImage(state.bgImage,0,0,bgCanvas.width,bgCanvas.height);
+    bgCtx.globalAlpha = 1;
+  }
+  if(state.showGrid && state.scalePxPerMeter){
+    drawGrid();
+  }
+}
+
+function drawGrid(){
+  const step = state.scalePxPerMeter;
+  bgCtx.save();
+
+  // Cuadrícula fina a la precisión de ajuste (0,5 m / 0,25 m), muy tenue
+  if(state.snapFraction < 1){
+    const fineStep = step * state.snapFraction;
+    bgCtx.strokeStyle = state.blankMode ? '#00000011' : '#FFFFFF22';
+    bgCtx.lineWidth = 1;
+    for(let x=0; x<=bgCanvas.width; x+=fineStep){
+      bgCtx.beginPath(); bgCtx.moveTo(x,0); bgCtx.lineTo(x,bgCanvas.height); bgCtx.stroke();
+    }
+    for(let y=0; y<=bgCanvas.height; y+=fineStep){
+      bgCtx.beginPath(); bgCtx.moveTo(0,y); bgCtx.lineTo(bgCanvas.width,y); bgCtx.stroke();
+    }
+  }
+
+  bgCtx.strokeStyle = state.blankMode ? '#00000022' : '#FFFFFF33';
+  bgCtx.lineWidth = 1;
+  for(let x=0; x<=bgCanvas.width; x+=step){
+    bgCtx.beginPath(); bgCtx.moveTo(x,0); bgCtx.lineTo(x,bgCanvas.height); bgCtx.stroke();
+  }
+  for(let y=0; y<=bgCanvas.height; y+=step){
+    bgCtx.beginPath(); bgCtx.moveTo(0,y); bgCtx.lineTo(bgCanvas.width,y); bgCtx.stroke();
+  }
+  // marca cada metro entero más fuerte cada 5
+  bgCtx.strokeStyle = state.blankMode ? '#00000044' : '#FFFFFF55';
+  let i=0;
+  for(let x=0; x<=bgCanvas.width; x+=step*5){
+    bgCtx.beginPath(); bgCtx.moveTo(x,0); bgCtx.lineTo(x,bgCanvas.height); bgCtx.stroke();
+  }
+  for(let y=0; y<=bgCanvas.height; y+=step*5){
+    bgCtx.beginPath(); bgCtx.moveTo(0,y); bgCtx.lineTo(bgCanvas.width,y); bgCtx.stroke();
+  }
+  bgCtx.restore();
+}
+
+/* Ajusta un punto a la cuadrícula si snap está activo y hay escala definida */
+function snapPoint(pos){
+  if(!state.snap || !state.scalePxPerMeter) return pos;
+  const step = state.scalePxPerMeter * state.snapFraction;
+  return { x: Math.round(pos.x/step)*step, y: Math.round(pos.y/step)*step };
+}
+
+/* Rota el punto p alrededor del centro c un ángulo (radianes) dado */
+function rotatePoint(p, c, ang){
+  const cos = Math.cos(ang), sin = Math.sin(ang);
+  const dx = p.x - c.x, dy = p.y - c.y;
+  return { x: c.x + dx*cos - dy*sin, y: c.y + dx*sin + dy*cos };
+}
+
+/* Coloca un mueble centrado en el punto dado, a su tamaño estándar en metros */
+function placeDefaultFurniture(center){
+  const info = FURNITURE_CATALOG.find(f=>f.id===state.furnitureType) || {sizeM:{w:0.8,h:0.8}};
+  const wPx = info.sizeM.w * state.scalePxPerMeter;
+  const hPx = info.sizeM.h * state.scalePxPerMeter;
+  const el = {
+    tool:'mobiliario',
+    x1: center.x - wPx/2, y1: center.y - hPx/2,
+    x2: center.x + wPx/2, y2: center.y + hPx/2,
+    furnitureType: state.furnitureType,
+    rotation: 0,
+  };
+  state.elements.push(el);
+  renderDraw(); updateBudget(); updateMeasureSummary(); updateWorkflowStep();
+  toast(`${info.label || 'Mueble'} colocado (${info.sizeM.w.toFixed(2)}×${info.sizeM.h.toFixed(2)} m). Arrastra sus esquinas para ajustarlo.`, 'ok');
+}
+
+function renderDraw(){
+  drawCtx.clearRect(0,0,drawCanvas.width,drawCanvas.height);
+  state.elements.forEach((el,i)=>drawElement(el, i===state.selectedIndex));
+}
+
+function drawElement(el, isSelected){
+  drawCtx.save();
+  if(el.tool === 'demolicion' || el.tool === 'muro' || el.tool === 'calibrate' || el.tool === 'planoBase'){
+    drawCtx.strokeStyle = el.tool==='calibrate' ? '#FFFFFF' : COLORS[el.tool];
+    drawCtx.lineWidth = el.tool==='calibrate' ? 2 : (el.tool==='planoBase' ? 8 : 5);
+    drawCtx.lineCap = el.tool==='planoBase' ? 'square' : 'butt';
+    if(el.tool==='calibrate') drawCtx.setLineDash([6,4]);
+    if(isSelected){
+      drawCtx.shadowColor = '#FFFFFF';
+      drawCtx.shadowBlur = 10;
+    }
+    drawCtx.beginPath();
+    drawCtx.moveTo(el.x1, el.y1);
+    drawCtx.lineTo(el.x2, el.y2);
+    drawCtx.stroke();
+    drawCtx.setLineDash([]);
+    drawCtx.shadowBlur = 0;
+    // label
+    if(el.lengthM != null){
+      const mx=(el.x1+el.x2)/2, my=(el.y1+el.y2)/2;
+      drawCtx.fillStyle='#fff';
+      drawCtx.font='bold 12px Inter';
+      drawCtx.fillText(el.lengthM.toFixed(2)+' m', mx+6, my-6);
+    }
+    if(isSelected){
+      // asas de edición en los extremos
+      [[el.x1,el.y1],[el.x2,el.y2]].forEach(([hx,hy])=>{
+        drawCtx.fillStyle = '#fff';
+        drawCtx.strokeStyle = '#15130F';
+        drawCtx.lineWidth = 2;
+        drawCtx.beginPath();
+        drawCtx.arc(hx,hy,6,0,Math.PI*2);
+        drawCtx.fill(); drawCtx.stroke();
+      });
+    }
+  } else if(el.tool === 'luz' || el.tool === 'agua'){
+    if(isSelected){
+      drawCtx.shadowColor = '#FFFFFF';
+      drawCtx.shadowBlur = 12;
+    }
+    drawCtx.fillStyle = COLORS[el.tool];
+    drawCtx.beginPath();
+    drawCtx.arc(el.x1, el.y1, 9, 0, Math.PI*2);
+    drawCtx.fill();
+    drawCtx.shadowBlur = 0;
+    drawCtx.strokeStyle='#fff';
+    drawCtx.lineWidth=2;
+    drawCtx.stroke();
+    drawCtx.fillStyle='#fff';
+    drawCtx.font='bold 11px Inter';
+    drawCtx.fillText(el.tool==='luz'?'💡':'🚰', el.x1-7, el.y1+4);
+    if(isSelected){
+      drawCtx.strokeStyle = '#fff';
+      drawCtx.lineWidth = 1.5;
+      drawCtx.setLineDash([3,3]);
+      drawCtx.beginPath();
+      drawCtx.arc(el.x1,el.y1,14,0,Math.PI*2);
+      drawCtx.stroke();
+      drawCtx.setLineDash([]);
+    }
+  } else if(el.tool === 'puerta'){
+    const dx=el.x2-el.x1, dy=el.y2-el.y1;
+    const len=Math.hypot(dx,dy);
+    if(len>0){
+      const angle = Math.atan2(dy,dx);
+      const leafAngle = angle - Math.PI/2; // hoja de la puerta a 90° del hueco
+      const leafX = el.x1 + Math.cos(leafAngle)*len;
+      const leafY = el.y1 + Math.sin(leafAngle)*len;
+      if(isSelected){ drawCtx.shadowColor='#FFFFFF'; drawCtx.shadowBlur=10; }
+      drawCtx.strokeStyle = COLORS.puerta;
+      // hueco del muro (línea discontinua)
+      drawCtx.lineWidth = 3;
+      drawCtx.setLineDash([5,3]);
+      drawCtx.beginPath(); drawCtx.moveTo(el.x1,el.y1); drawCtx.lineTo(el.x2,el.y2); drawCtx.stroke();
+      drawCtx.setLineDash([]);
+      // hoja de la puerta
+      drawCtx.beginPath(); drawCtx.moveTo(el.x1,el.y1); drawCtx.lineTo(leafX,leafY); drawCtx.stroke();
+      // arco de apertura
+      drawCtx.setLineDash([2,3]);
+      drawCtx.lineWidth = 1.5;
+      drawCtx.beginPath(); drawCtx.arc(el.x1, el.y1, len, leafAngle, angle); drawCtx.stroke();
+      drawCtx.setLineDash([]);
+      drawCtx.shadowBlur = 0;
+      if(el.lengthM != null){
+        const mx=(el.x1+el.x2)/2, my=(el.y1+el.y2)/2;
+        drawCtx.fillStyle='#fff';
+        drawCtx.font='bold 12px Inter';
+        drawCtx.fillText(el.lengthM.toFixed(2)+' m', mx+6, my-6);
+      }
+      if(isSelected){
+        [[el.x1,el.y1],[el.x2,el.y2]].forEach(([hx,hy])=>{
+          drawCtx.fillStyle = '#fff';
+          drawCtx.strokeStyle = '#15130F';
+          drawCtx.lineWidth = 2;
+          drawCtx.beginPath();
+          drawCtx.arc(hx,hy,6,0,Math.PI*2);
+          drawCtx.fill(); drawCtx.stroke();
+        });
+      }
+    }
+  } else if(el.tool === 'mobiliario'){
+    const minX=Math.min(el.x1,el.x2), maxX=Math.max(el.x1,el.x2);
+    const minY=Math.min(el.y1,el.y2), maxY=Math.max(el.y1,el.y2);
+    const w=maxX-minX, h=maxY-minY;
+    const cx=(minX+maxX)/2, cy=(minY+maxY)/2;
+    const rot = el.rotation || 0;
+    const info = FURNITURE_CATALOG.find(f=>f.id===el.furnitureType) || {emoji:'🔲', label:el.furnitureType||'Mueble'};
+
+    // caja del mueble, dibujada rotada alrededor de su centro
+    drawCtx.save();
+    drawCtx.translate(cx,cy);
+    drawCtx.rotate(rot);
+    if(isSelected){ drawCtx.shadowColor='#FFFFFF'; drawCtx.shadowBlur=10; }
+    drawCtx.fillStyle = COLORS.mobiliario+'33';
+    drawCtx.strokeStyle = COLORS.mobiliario;
+    drawCtx.lineWidth = 2;
+    drawCtx.beginPath();
+    drawCtx.rect(-w/2,-h/2,w,h);
+    drawCtx.fill(); drawCtx.stroke();
+    drawCtx.shadowBlur = 0;
+    drawCtx.textAlign = 'center';
+    drawCtx.textBaseline = 'middle';
+    drawCtx.fillStyle = '#fff';
+    const showLabel = w>55 && h>30;
+    drawCtx.font = showLabel ? 'bold 18px Inter' : 'bold 12px Inter';
+    drawCtx.fillText(info.emoji, 0, -(showLabel?9:0));
+    if(showLabel){
+      drawCtx.font = 'bold 10px Inter';
+      drawCtx.fillText(info.label, 0, 11);
+    }
+    drawCtx.restore();
+
+    // etiqueta de medidas, sin rotar para que sea siempre legible
+    if(state.scalePxPerMeter && w>10 && h>10){
+      const labelPos = rotatePoint({x:-w/2, y:-h/2}, {x:0,y:0}, rot);
+      drawCtx.textAlign = 'left';
+      drawCtx.textBaseline = 'alphabetic';
+      drawCtx.fillStyle = '#fff';
+      drawCtx.font = 'bold 10px Inter';
+      drawCtx.fillText(`${(w/state.scalePxPerMeter).toFixed(2)}×${(h/state.scalePxPerMeter).toFixed(2)} m`, cx+labelPos.x+4, cy+labelPos.y-6);
+    }
+    if(isSelected){
+      // asas de redimensionar en las esquinas (posición mundial según rotación)
+      [{x:el.x1,y:el.y1},{x:el.x2,y:el.y2}].forEach(p=>{
+        const wp = rot ? rotatePoint(p, {x:cx,y:cy}, rot) : p;
+        drawCtx.fillStyle = '#fff';
+        drawCtx.strokeStyle = '#15130F';
+        drawCtx.lineWidth = 2;
+        drawCtx.beginPath();
+        drawCtx.arc(wp.x,wp.y,6,0,Math.PI*2);
+        drawCtx.fill(); drawCtx.stroke();
+      });
+      // asa de rotación: círculo por encima del centro, conectado con una línea
+      const localHandle = {x:0, y:-h/2-26};
+      const worldHandle = rotatePoint(localHandle, {x:0,y:0}, rot);
+      const hx = cx+worldHandle.x, hy = cy+worldHandle.y;
+      const localTop = rotatePoint({x:0,y:-h/2}, {x:0,y:0}, rot);
+      drawCtx.strokeStyle = '#fff';
+      drawCtx.lineWidth = 1.5;
+      drawCtx.beginPath();
+      drawCtx.moveTo(cx+localTop.x, cy+localTop.y);
+      drawCtx.lineTo(hx,hy);
+      drawCtx.stroke();
+      drawCtx.fillStyle = COLORS.mobiliario;
+      drawCtx.strokeStyle = '#fff';
+      drawCtx.lineWidth = 2;
+      drawCtx.beginPath();
+      drawCtx.arc(hx,hy,7,0,Math.PI*2);
+      drawCtx.fill(); drawCtx.stroke();
+      drawCtx.fillStyle='#fff';
+      drawCtx.font='bold 9px Inter';
+      drawCtx.textAlign='center';
+      drawCtx.textBaseline='middle';
+      drawCtx.fillText('⟳', hx, hy+0.5);
+    }
+  }
+  drawCtx.restore();
+}
+
+/* ============================================================
+   CARGA DE PLANOS (imagen o PDF)
+   ============================================================ */
+document.getElementById('btnUpload').addEventListener('click', ()=>document.getElementById('fileInput').click());
+document.getElementById('fileInput').addEventListener('change', e=>{
+  const file = e.target.files[0];
+  if(file) loadPlanFile(file);
+});
+
+function loadPlanFile(file){
+  if(file.type === 'application/pdf'){
+    loadPdfAsImage(file).then(img=>setBackgroundImage(img));
+  } else if(file.type.startsWith('image/')){
+    const reader = new FileReader();
+    reader.onload = e=>{
+      const img = new Image();
+      img.onload = ()=>setBackgroundImage(img);
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  } else {
+    toast('Formato no soportado. Sube una imagen (JPG/PNG/SVG) o un PDF.', 'warn');
+  }
+}
+
+/* Carga un PDF, renderiza la primera página en un canvas en memoria y devuelve un HTMLImageElement */
+async function loadPdfAsImage(file){
+  const arrayBuffer = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({data: arrayBuffer}).promise;
+  const page = await pdf.getPage(1);
+  const viewport = page.getViewport({scale: 2});
+  const tempCanvas = document.createElement('canvas');
+  tempCanvas.width = viewport.width;
+  tempCanvas.height = viewport.height;
+  const tempCtx = tempCanvas.getContext('2d');
+  await page.render({canvasContext: tempCtx, viewport}).promise;
+  return new Promise(resolve=>{
+    const img = new Image();
+    img.onload = ()=>resolve(img);
+    img.src = tempCanvas.toDataURL('image/png');
+  });
+}
+
+/* ============================================================
+   MODO "DIBUJAR DESDE CERO" (sin plano subido)
+   ============================================================ */
+function activateBlankMode(){
+  state.bgImage = null;
+  state.blankMode = true;
+  state.elements = [];
+
+  const wrap = document.getElementById('canvasWrap');
+  const w = Math.max(200, Math.min(wrap.clientWidth - 40, 1100));
+  const h = Math.max(150, Math.min(wrap.clientHeight - 40, 750));
+  setCanvasSize(w,h);
+
+  // Escala inicial: usa el valor del campo "1 metro = X px" (por defecto 60)
+  const pxm = parseFloat(document.getElementById('gridPxPerMeter').value) || 60;
+  state.scalePxPerMeter = pxm;
+  document.getElementById('calibStatus').textContent = `✅ Escala fijada: ${pxm} px = 1 metro (modo dibujo desde cero).`;
+  document.getElementById('gridControls').style.display = 'block';
+  setSnapControlsVisible(true);
+
+  emptyState.style.display = 'none';
+  canvasStack.style.display = 'block';
+
+  // Selecciona automáticamente la herramienta "muro existente" para que el usuario
+  // trace primero el plano base (perímetro real) antes de anotar la reforma.
+  const planoBaseBtn = document.querySelector('.tool-btn[data-tool="planoBase"]');
+  if(planoBaseBtn){
+    document.querySelectorAll('.tool-btn[data-tool]').forEach(b=>b.classList.remove('active'));
+    planoBaseBtn.classList.add('active');
+    state.currentTool = 'planoBase';
+  }
+
+  renderBg(); renderDraw(); updateBudget(); updateMeasureSummary(); updateWorkflowStep();
+  toast('Modo "Dibujar desde cero" activado. Traza primero el muro existente (perímetro).', 'ok');
+}
+
+document.getElementById('btnBlank').addEventListener('click', activateBlankMode);
+
+document.getElementById('btnGridApply').addEventListener('click', ()=>{
+  const pxm = parseFloat(document.getElementById('gridPxPerMeter').value);
+  if(!pxm || pxm<=0){ toast('Introduce un valor válido de píxeles por metro.', 'warn'); return; }
+  const oldScale = state.scalePxPerMeter;
+  state.scalePxPerMeter = pxm;
+
+  // Reescala los elementos existentes para mantener sus medidas reales en metros
+  if(oldScale){
+    const factor = pxm / oldScale;
+    state.elements.forEach(el=>{
+      el.x1*=factor; el.y1*=factor; el.x2*=factor; el.y2*=factor;
+    });
+  }
+  document.getElementById('calibStatus').textContent = `✅ Escala actualizada: ${pxm} px = 1 metro.`;
+  renderBg(); renderDraw(); updateBudget(); updateMeasureSummary(); updateWorkflowStep();
+});
+
+function setSnapControlsVisible(visible){
+  ['snapStepRow','snapToggleRow','gridVisibleRow','obliqueNote'].forEach(id=>{
+    document.getElementById(id).style.display = visible ? (id==='snapStepRow'?'flex':(id==='obliqueNote'?'block':'flex')) : 'none';
+  });
+}
+
+document.getElementById('snapToggle').addEventListener('change', e=>{ state.snap = e.target.checked; });
+document.getElementById('gridVisibleToggle').addEventListener('change', e=>{
+  state.showGrid = e.target.checked; renderBg();
+});
+document.getElementById('snapStep').addEventListener('change', e=>{
+  state.snapFraction = parseFloat(e.target.value) || 0.5;
+  renderBg();
+});
+
+function setBackgroundImage(img){
+  state.bgImage = img;
+  state.blankMode = false;
+  state.elements = [];
+  state.scalePxPerMeter = null;
+  document.getElementById('calibStatus').textContent = 'Sin calibrar — las medidas se mostrarán en píxeles.';
+  document.getElementById('gridControls').style.display = 'none';
+  setSnapControlsVisible(false);
+
+  // Tamaño máximo dentro del wrap
+  const wrap = document.getElementById('canvasWrap');
+  const maxW = wrap.clientWidth - 40;
+  const maxH = wrap.clientHeight - 40;
+  let w = img.width, h = img.height;
+  const ratio = Math.min(maxW/w, maxH/h, 1.5);
+  w = w*ratio; h = h*ratio;
+
+  setCanvasSize(w,h);
+  emptyState.style.display='none';
+  canvasStack.style.display='block';
+  renderBg();
+  renderDraw();
+  updateBudget();
+  updateMeasureSummary();
+  updateWorkflowStep();
+  toast('Plano cargado. Ahora calibra la escala con la herramienta 📏 Calibrar.', 'ok');
+}
+
+/* Cargar plano recibido por postMessage (dataURL) */
+function loadPlanFromDataUrl(dataUrl, isPdf){
+  if(isPdf){
+    fetch(dataUrl).then(r=>r.blob()).then(blob=>{
+      loadPdfAsImage(new File([blob], 'plano.pdf', {type:'application/pdf'})).then(img=>setBackgroundImage(img));
+    });
+  } else {
+    const img = new Image();
+    img.onload = ()=>setBackgroundImage(img);
+    img.src = dataUrl;
+  }
+}
+
+/* ============================================================
+   HERRAMIENTAS / DIBUJO
+   ============================================================ */
+document.querySelectorAll('.tool-btn[data-tool]').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.tool-btn[data-tool]').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    state.currentTool = btn.dataset.tool;
+    state.selectedIndex = -1;
+    drawCanvas.classList.toggle('tool-select', state.currentTool==='select');
+    renderDraw();
+  });
+});
+drawCanvas.classList.add('tool-select'); // 'select' es la herramienta inicial
+
+document.getElementById('btnUndo').addEventListener('click', ()=>{
+  if(!state.elements.length){ toast('No hay nada que deshacer.'); return; }
+  state.elements.pop();
+  state.selectedIndex = -1;
+  renderDraw(); updateBudget(); updateMeasureSummary(); updateWorkflowStep();
+});
+document.getElementById('btnClear').addEventListener('click', ()=>{
+  if(confirm('¿Borrar todos los elementos dibujados (capa "Después")?')){
+    state.elements = state.elements.filter(e=>e.tool==='calibrate');
+    state.selectedIndex = -1;
+    renderDraw(); updateBudget(); updateMeasureSummary(); updateWorkflowStep();
+  }
+});
+document.getElementById('btnDeleteSel').addEventListener('click', deleteSelected);
+
+function deleteSelected(){
+  if(state.selectedIndex < 0){ toast('Primero selecciona un elemento con ↖️ Seleccionar.'); return; }
+  state.elements.splice(state.selectedIndex,1);
+  state.selectedIndex = -1;
+  renderDraw(); updateBudget(); updateMeasureSummary(); updateWorkflowStep();
+}
+
+document.addEventListener('keydown', e=>{
+  if((e.key === 'Delete' || e.key === 'Backspace') && state.selectedIndex >= 0){
+    // evita borrar mientras se escribe en un input
+    if(document.activeElement && ['INPUT','TEXTAREA'].includes(document.activeElement.tagName)) return;
+    e.preventDefault();
+    deleteSelected();
+  }
+  if((e.key === '[' || e.key === ']') && state.selectedIndex >= 0){
+    if(document.activeElement && ['INPUT','TEXTAREA'].includes(document.activeElement.tagName)) return;
+    e.preventDefault();
+    rotateSelected(e.key === '[' ? -15 : 15);
+  }
+});
+
+/* ============================================================
+   ROTACIÓN DE MOBILIARIO
+   ============================================================ */
+function rotateSelected(deg){
+  if(state.selectedIndex < 0){ toast('Primero selecciona un mueble con ↖️ Seleccionar.'); return; }
+  const el = state.elements[state.selectedIndex];
+  if(el.tool !== 'mobiliario'){ toast('Solo se puede rotar mobiliario.'); return; }
+  el.rotation = (el.rotation || 0) + deg * Math.PI/180;
+  renderDraw(); updateBudget(); updateMeasureSummary();
+}
+document.getElementById('btnRotateLeft').addEventListener('click', ()=>rotateSelected(-15));
+document.getElementById('btnRotateRight').addEventListener('click', ()=>rotateSelected(15));
+
+/* ============================================================
+   ZOOM
+   ============================================================ */
+function applyZoom(){
+  canvasStack.style.transform = `scale(${state.zoom})`;
+  document.getElementById('zoomIndicator').textContent = Math.round(state.zoom*100)+'%';
+}
+document.getElementById('btnZoomIn').addEventListener('click', ()=>{
+  state.zoom = Math.min(state.zoom + 0.15, 3);
+  applyZoom();
+});
+document.getElementById('btnZoomOut').addEventListener('click', ()=>{
+  state.zoom = Math.max(state.zoom - 0.15, 0.3);
+  applyZoom();
+});
+document.getElementById('btnZoomReset').addEventListener('click', ()=>{
+  state.zoom = 1; applyZoom();
+});
+document.getElementById('canvasWrap').addEventListener('wheel', e=>{
+  if(!e.ctrlKey && !e.metaKey) return; // requiere Ctrl/Cmd + rueda para no interferir con el scroll
+  e.preventDefault();
+  state.zoom = Math.min(3, Math.max(0.3, state.zoom + (e.deltaY < 0 ? 0.1 : -0.1)));
+  applyZoom();
+}, {passive:false});
+
+/* Convierte coordenadas de pantalla a coordenadas del canvas, compensando el zoom */
+function getMousePos(e){
+  const rect = drawCanvas.getBoundingClientRect();
+  return {
+    x: (e.clientX-rect.left)/state.zoom,
+    y: (e.clientY-rect.top)/state.zoom
+  };
+}
+
+/* Distancia de un punto a un segmento (para hit-testing de líneas) */
+function distToSegment(p, a, b){
+  const l2 = (b.x-a.x)**2 + (b.y-a.y)**2;
+  if(l2===0) return Math.hypot(p.x-a.x, p.y-a.y);
+  let t = ((p.x-a.x)*(b.x-a.x) + (p.y-a.y)*(b.y-a.y)) / l2;
+  t = Math.max(0, Math.min(1, t));
+  const proj = {x: a.x+t*(b.x-a.x), y: a.y+t*(b.y-a.y)};
+  return Math.hypot(p.x-proj.x, p.y-proj.y);
+}
+
+/* Busca el elemento bajo el cursor; devuelve {index, part} donde part es 'p1'|'p2'|'move'|null */
+const HANDLE_R = 10;
+function hitTest(pos){
+  for(let i=state.elements.length-1; i>=0; i--){
+    const el = state.elements[i];
+    if(el.tool==='calibrate') continue;
+    if(el.tool==='luz' || el.tool==='agua'){
+      if(Math.hypot(pos.x-el.x1, pos.y-el.y1) <= HANDLE_R) return {index:i, part:'move'};
+    } else if(el.tool==='mobiliario'){
+      const minX=Math.min(el.x1,el.x2), maxX=Math.max(el.x1,el.x2);
+      const minY=Math.min(el.y1,el.y2), maxY=Math.max(el.y1,el.y2);
+      const cx=(minX+maxX)/2, cy=(minY+maxY)/2, h=maxY-minY;
+      const rot = el.rotation || 0;
+      // asa de rotación (por encima del centro, en el mundo)
+      const worldHandle = rot ? rotatePoint({x:cx,y:cy-h/2-26},{x:cx,y:cy},rot) : {x:cx,y:cy-h/2-26};
+      if(Math.hypot(pos.x-worldHandle.x, pos.y-worldHandle.y) <= HANDLE_R) return {index:i, part:'rotate'};
+      // esquinas p1/p2, transformadas al mundo según rotación
+      const wp1 = rot ? rotatePoint({x:el.x1,y:el.y1},{x:cx,y:cy},rot) : {x:el.x1,y:el.y1};
+      const wp2 = rot ? rotatePoint({x:el.x2,y:el.y2},{x:cx,y:cy},rot) : {x:el.x2,y:el.y2};
+      if(Math.hypot(pos.x-wp1.x, pos.y-wp1.y) <= HANDLE_R) return {index:i, part:'p1'};
+      if(Math.hypot(pos.x-wp2.x, pos.y-wp2.y) <= HANDLE_R) return {index:i, part:'p2'};
+      // interior de la caja: probamos en espacio local (des-rotando el punto)
+      const local = rot ? rotatePoint(pos,{x:cx,y:cy},-rot) : pos;
+      if(local.x>=minX && local.x<=maxX && local.y>=minY && local.y<=maxY) return {index:i, part:'move'};
+    } else {
+      if(Math.hypot(pos.x-el.x1, pos.y-el.y1) <= HANDLE_R) return {index:i, part:'p1'};
+      if(Math.hypot(pos.x-el.x2, pos.y-el.y2) <= HANDLE_R) return {index:i, part:'p2'};
+      if(distToSegment(pos, {x:el.x1,y:el.y1}, {x:el.x2,y:el.y2}) <= 6) return {index:i, part:'move'};
+    }
+  }
+  return null;
+}
+
+drawCanvas.addEventListener('mousedown', e=>{
+  if(!state.bgImage && !state.blankMode) return;
+  const pos = getMousePos(e);
+  const tool = state.currentTool;
+
+  if(tool === 'select'){
+    const hit = hitTest(state.snap ? snapPoint(pos) : pos) || hitTest(pos);
+    if(hit){
+      state.selectedIndex = hit.index;
+      state.dragMode = hit.part;
+      const el = state.elements[hit.index];
+      if(hit.part === 'move'){
+        state.dragOffset = {dx: pos.x-el.x1, dy: pos.y-el.y1, dx2: pos.x-el.x2, dy2: pos.y-el.y2};
+      }
+      drawCanvas.classList.add('dragging');
+    } else {
+      state.selectedIndex = -1;
+      state.dragMode = null;
+    }
+    renderDraw();
+    return;
+  }
+
+  const snapped = snapPoint(pos);
+  if(tool === 'luz' || tool === 'agua'){
+    state.elements.push({tool, x1:snapped.x, y1:snapped.y, x2:snapped.x, y2:snapped.y});
+    renderDraw(); updateBudget(); updateMeasureSummary();
+    return;
+  }
+
+  state.drawing = true;
+  state.startPt = snapped;
+});
+
+drawCanvas.addEventListener('mousemove', e=>{
+  // --- Modo selección: arrastrar / editar elemento ---
+  if(state.currentTool === 'select' && state.dragMode && state.selectedIndex >= 0){
+    const pos = getMousePos(e);
+    const snapped = snapPoint(pos);
+    const el = state.elements[state.selectedIndex];
+    if(el.tool === 'mobiliario' && state.dragMode === 'rotate'){
+      const minX=Math.min(el.x1,el.x2), maxX=Math.max(el.x1,el.x2);
+      const minY=Math.min(el.y1,el.y2), maxY=Math.max(el.y1,el.y2);
+      const cx=(minX+maxX)/2, cy=(minY+maxY)/2;
+      let ang = Math.atan2(pos.y-cy, pos.x-cx) + Math.PI/2;
+      // ajusta a incrementos de 15° salvo que se mantenga pulsada Shift para rotación libre
+      if(!e.shiftKey){
+        const step = Math.PI/12; // 15°
+        ang = Math.round(ang/step)*step;
+      }
+      el.rotation = ang;
+      renderDraw(); updateBudget(); updateMeasureSummary();
+      return;
+    } else if(el.tool === 'mobiliario' && (state.dragMode === 'p1' || state.dragMode === 'p2')){
+      // redimensiona en el espacio local (sin rotar) del mueble
+      const minX=Math.min(el.x1,el.x2), maxX=Math.max(el.x1,el.x2);
+      const minY=Math.min(el.y1,el.y2), maxY=Math.max(el.y1,el.y2);
+      const cx=(minX+maxX)/2, cy=(minY+maxY)/2;
+      const rot = el.rotation || 0;
+      const local = rot ? rotatePoint(snapped, {x:cx,y:cy}, -rot) : snapped;
+      if(state.dragMode === 'p1'){ el.x1 = local.x; el.y1 = local.y; }
+      else { el.x2 = local.x; el.y2 = local.y; }
+    } else if(state.dragMode === 'p1'){
+      el.x1 = snapped.x; el.y1 = snapped.y;
+    } else if(state.dragMode === 'p2'){
+      el.x2 = snapped.x; el.y2 = snapped.y;
+    } else if(state.dragMode === 'move'){
+      if(el.tool==='luz' || el.tool==='agua'){
+        el.x1 = snapped.x; el.y1 = snapped.y; el.x2 = snapped.x; el.y2 = snapped.y;
+      } else {
+        const nx1 = pos.x - state.dragOffset.dx;
+        const ny1 = pos.y - state.dragOffset.dy;
+        const dx = nx1 - el.x1, dy = ny1 - el.y1;
+        el.x1 += dx; el.y1 += dy; el.x2 += dx; el.y2 += dy;
+        if(state.snap){
+          const s1 = snapPoint({x:el.x1,y:el.y1});
+          const offX = s1.x-el.x1, offY = s1.y-el.y1;
+          el.x1+=offX; el.y1+=offY; el.x2+=offX; el.y2+=offY;
+        }
+      }
+    }
+    if(state.scalePxPerMeter && (el.tool==='demolicion'||el.tool==='muro'||el.tool==='planoBase'||el.tool==='puerta')){
+      el.lengthM = Math.hypot(el.x2-el.x1, el.y2-el.y1) / state.scalePxPerMeter;
+    }
+    renderDraw(); updateBudget(); updateMeasureSummary();
+    return;
+  }
+
+  if(!state.drawing) return;
+  const pos = snapPoint(getMousePos(e));
+  renderDraw();
+  // ghost line
+  const tool = state.currentTool;
+  if(tool==='demolicion'||tool==='muro'||tool==='calibrate'||tool==='planoBase'||tool==='puerta'){
+    drawCtx.save();
+    drawCtx.strokeStyle = tool==='calibrate' ? '#FFFFFF99' : (COLORS[tool]+'aa');
+    drawCtx.lineWidth = tool==='calibrate'?2:(tool==='planoBase'?8:5);
+    if(tool==='calibrate') drawCtx.setLineDash([6,4]);
+    drawCtx.beginPath();
+    drawCtx.moveTo(state.startPt.x, state.startPt.y);
+    drawCtx.lineTo(pos.x, pos.y);
+    drawCtx.stroke();
+    drawCtx.restore();
+
+    // tooltip de longitud en vivo
+    const dist = Math.hypot(pos.x-state.startPt.x, pos.y-state.startPt.y);
+    const badge = document.getElementById('liveLenBadge');
+    const txt = state.scalePxPerMeter ? (dist/state.scalePxPerMeter).toFixed(2)+' m' : dist.toFixed(0)+' px';
+    badge.textContent = txt;
+    badge.style.display = 'block';
+    badge.style.left = ((pos.x+state.startPt.x)/2*state.zoom + 10) + 'px';
+    badge.style.top = ((pos.y+state.startPt.y)/2*state.zoom - 22) + 'px';
+  } else if(tool==='mobiliario'){
+    const minX=Math.min(state.startPt.x,pos.x), maxX=Math.max(state.startPt.x,pos.x);
+    const minY=Math.min(state.startPt.y,pos.y), maxY=Math.max(state.startPt.y,pos.y);
+    drawCtx.save();
+    drawCtx.fillStyle = COLORS.mobiliario+'33';
+    drawCtx.strokeStyle = COLORS.mobiliario;
+    drawCtx.lineWidth = 2;
+    drawCtx.setLineDash([5,3]);
+    drawCtx.beginPath();
+    drawCtx.rect(minX,minY,maxX-minX,maxY-minY);
+    drawCtx.fill(); drawCtx.stroke();
+    drawCtx.setLineDash([]);
+    drawCtx.restore();
+
+    // tooltip de dimensiones en vivo
+    const w=maxX-minX, h=maxY-minY;
+    const badge = document.getElementById('liveLenBadge');
+    const txt = state.scalePxPerMeter ? `${(w/state.scalePxPerMeter).toFixed(2)}×${(h/state.scalePxPerMeter).toFixed(2)} m` : `${w.toFixed(0)}×${h.toFixed(0)} px`;
+    badge.textContent = txt;
+    badge.style.display = 'block';
+    badge.style.left = (maxX*state.zoom + 10) + 'px';
+    badge.style.top = (minY*state.zoom - 22) + 'px';
+  }
+});
+
+drawCanvas.addEventListener('mouseup', e=>{
+  if(state.currentTool === 'select'){
+    state.dragMode = null;
+    drawCanvas.classList.remove('dragging');
+    return;
+  }
+  if(!state.drawing) return;
+  state.drawing = false;
+  document.getElementById('liveLenBadge').style.display = 'none';
+  const pos = snapPoint(getMousePos(e));
+  const tool = state.currentTool;
+  if(tool!=='demolicion' && tool!=='muro' && tool!=='calibrate' && tool!=='planoBase' && tool!=='puerta' && tool!=='mobiliario'){ renderDraw(); return; }
+
+  const dist = Math.hypot(pos.x-state.startPt.x, pos.y-state.startPt.y);
+  if(dist < 4){
+    if(tool === 'mobiliario'){
+      if(!state.scalePxPerMeter){
+        toast('Calibra la escala (paso 2) para colocar muebles a tamaño estándar con un clic. Mientras tanto, arrastra para dibujar el hueco.', 'warn');
+      } else {
+        placeDefaultFurniture(state.startPt);
+      }
+    }
+    renderDraw();
+    return;
+  } // ignora clics accidentales del resto de herramientas
+
+  const el = {tool, x1:state.startPt.x, y1:state.startPt.y, x2:pos.x, y2:pos.y};
+  if(tool === 'calibrate'){
+    if(state.blankMode){
+      toast('En modo "Dibujar desde cero" la escala ya está fijada por la cuadrícula. Usa el control "1 metro = X px" en la barra lateral.', 'warn');
+      renderDraw(); return;
+    }
+    // Sólo guardamos una línea de calibración a la vez
+    state.elements = state.elements.filter(e=>e.tool!=='calibrate');
+    state.elements.push(el);
+    document.getElementById('calibStatus').textContent = `Línea trazada: ${dist.toFixed(0)} px. Introduce los metros reales y pulsa "Aplicar".`;
+  } else {
+    if(state.scalePxPerMeter) el.lengthM = dist / state.scalePxPerMeter;
+    if(tool === 'mobiliario'){ el.furnitureType = state.furnitureType; el.rotation = 0; }
+    state.elements.push(el);
+  }
+  renderDraw(); updateBudget(); updateMeasureSummary(); updateWorkflowStep();
+});
+
+/* ============================================================
+   CALIBRACIÓN
+   ============================================================ */
+document.getElementById('btnCalibApply').addEventListener('click', ()=>{
+  const meters = parseFloat(document.getElementById('calibMeters').value);
+  const calibLine = state.elements.find(e=>e.tool==='calibrate');
+  if(!calibLine || !meters || meters<=0){
+    toast('Primero traza una línea de calibración con la herramienta 📏 Calibrar y escribe los metros reales.', 'warn');
+    return;
+  }
+  const distPx = Math.hypot(calibLine.x2-calibLine.x1, calibLine.y2-calibLine.y1);
+  state.scalePxPerMeter = distPx / meters;
+  document.getElementById('calibStatus').textContent = `✅ Calibrado: ${state.scalePxPerMeter.toFixed(1)} px = 1 metro.`;
+  setSnapControlsVisible(true);
+
+  // Recalcular longitudes de elementos lineales existentes
+  state.elements.forEach(el=>{
+    if(el.tool==='demolicion'||el.tool==='muro'||el.tool==='planoBase'||el.tool==='puerta'){
+      const d = Math.hypot(el.x2-el.x1, el.y2-el.y1);
+      el.lengthM = d / state.scalePxPerMeter;
+    }
+  });
+  renderDraw(); updateBudget(); updateMeasureSummary(); updateWorkflowStep();
+  toast('Escala calibrada. Ya puedes diseñar la reforma en el paso 3.', 'ok');
+});
+
+/* ============================================================
+   OPACIDAD CAPA "ANTES"
+   ============================================================ */
+document.getElementById('opacitySlider').addEventListener('input', e=>{
+  state.bgOpacity = e.target.value/100;
+  document.getElementById('opacityVal').textContent = e.target.value+'%';
+  renderBg();
+});
+
+/* ============================================================
+   MEDICIONES (resumen lateral)
+   ============================================================ */
+function getMeasurements(){
+  let demM=0, muroM=0, luzN=0, aguaN=0, planoBaseM=0, puertaN=0, mobiliarioN=0;
+  state.elements.forEach(el=>{
+    if(el.tool==='demolicion'){
+      const d = el.lengthM ?? Math.hypot(el.x2-el.x1, el.y2-el.y1);
+      demM += d;
+    } else if(el.tool==='muro'){
+      const d = el.lengthM ?? Math.hypot(el.x2-el.x1, el.y2-el.y1);
+      muroM += d;
+    } else if(el.tool==='planoBase'){
+      const d = el.lengthM ?? Math.hypot(el.x2-el.x1, el.y2-el.y1);
+      planoBaseM += d;
+    } else if(el.tool==='luz') luzN++;
+    else if(el.tool==='agua') aguaN++;
+    else if(el.tool==='puerta') puertaN++;
+    else if(el.tool==='mobiliario') mobiliarioN++;
+  });
+  return {demM, muroM, luzN, aguaN, planoBaseM, puertaN, mobiliarioN, calibrated: !!state.scalePxPerMeter};
+}
+
+function updateMeasureSummary(){
+  const m = getMeasurements();
+  const unit = m.calibrated ? 'm' : 'px';
+  const fmt = v => m.calibrated ? v.toFixed(2)+' m' : v.toFixed(0)+' px';
+  document.getElementById('measureSummary').innerHTML = `
+    ${m.planoBaseM>0 ? `<div>⬜ Muro existente (plano base): <b>${fmt(m.planoBaseM)}</b> <span style="opacity:.6;">(no cuenta en presupuesto)</span></div>` : ''}
+    <div>🟥 Demolición de tabique: <b>${fmt(m.demM)}</b></div>
+    <div>🟩 Muro nuevo: <b>${fmt(m.muroM)}</b></div>
+    <div>💡 Puntos de luz: <b>${m.luzN}</b></div>
+    <div>🚰 Puntos de agua: <b>${m.aguaN}</b></div>
+    <div>🚪 Puertas: <b>${m.puertaN}</b></div>
+    ${m.mobiliarioN>0 ? `<div>🛋️ Mobiliario colocado: <b>${m.mobiliarioN}</b> <span style="opacity:.6;">(no cuenta en presupuesto)</span></div>` : ''}
+    ${!m.calibrated ? '<div style="color:#D97706;margin-top:6px;">⚠️ Calibra la escala para presupuesto en € real.</div>' : ''}
+  `;
+}
+
+/* ============================================================
+   MOTOR DE PRESUPUESTOS
+   ============================================================ */
+function calcBudget(){
+  const m = getMeasurements();
+  if(!m.calibrated){
+    return {valid:false};
+  }
+
+  // --- Costes de materiales / unidades ---
+  const demolicion = m.demM * PRECIOS.demolicionMetro;
+  const muroMat = m.muroM * PRECIOS.muroMetro;
+  // Construcción extra: pladur en ambas caras del muro nuevo (m² = longitud x 2.6m altura x 2 caras), pintura y tarima estimadas sobre superficie afectada (aprox)
+  const pladurM2 = m.muroM * 2.6 * 2;
+  const pladurCost = pladurM2 * PRECIOS.pladurM2;
+  const pinturaM2 = (m.demM + m.muroM) * 2.6; // superficie de paredes afectadas a repintar
+  const pinturaCost = pinturaM2 * PRECIOS.pinturaM2;
+  const tarimaM2 = m.demM * 1.2; // estimación de suelo a reponer junto a tabiques tirados
+  const tarimaCost = tarimaM2 * PRECIOS.tarimaM2;
+
+  const instalLuz = m.luzN * PRECIOS.puntoLuz;
+  const instalAgua = m.aguaN * PRECIOS.puntoAgua;
+  const puertasCost = m.puertaN * PRECIOS.puertaUd;
+
+  // --- Mano de obra (basada en EQUIPO recibido) ---
+  const albanil = EQUIPO_RECIBIDO.find(p=>p.role==='Albañil') || {costeHora:22};
+  const electricista = EQUIPO_RECIBIDO.find(p=>p.role==='Electricista') || {costeHora:28};
+  const fontanero = EQUIPO_RECIBIDO.find(p=>p.role==='Fontanero') || {costeHora:26};
+
+  const horasAlbanil = m.demM*HORAS.demolicionMetroHoras + m.muroM*HORAS.muroMetroHoras
+                      + pladurM2*HORAS.pladurM2Horas + pinturaM2*HORAS.pintarM2Horas + tarimaM2*HORAS.tarimaM2Horas
+                      + m.puertaN*HORAS.puertaHoras;
+  const horasElec = m.luzN * HORAS.puntoLuzHoras;
+  const horasFont = m.aguaN * HORAS.puntoAguaHoras;
+
+  const moAlbanil = horasAlbanil * albanil.costeHora;
+  const moElec = horasElec * electricista.costeHora;
+  const moFont = horasFont * fontanero.costeHora;
+  const manoObraTotal = moAlbanil + moElec + moFont;
+
+  const demoliciones = demolicion;
+  const construccion = muroMat + pladurCost + pinturaCost + tarimaCost + puertasCost;
+  const instalaciones = instalLuz + instalAgua;
+
+  const costeTotal = demoliciones + construccion + instalaciones + manoObraTotal;
+  const pvp = costeTotal * (1 + PRECIOS.margenPct/100);
+
+  return {
+    valid:true, m,
+    demoliciones, construccion, instalaciones, manoObraTotal,
+    detalle:{ demolicion, muroMat, pladurCost, pinturaCost, tarimaCost, instalLuz, instalAgua, puertasCost,
+              horasAlbanil, horasElec, horasFont, moAlbanil, moElec, moFont,
+              pladurM2, pinturaM2, tarimaM2 },
+    costeTotal, pvp
+  };
+}
+
+function eur(v){ return v.toLocaleString('es-ES',{maximumFractionDigits:0})+' €'; }
+
+function updateBudget(){
+  const b = calcBudget();
+  const out = document.getElementById('budgetOutput');
+  if(!b.valid){
+    out.innerHTML = `<div style="font-size:12px;color:var(--arena);opacity:.8;">Calibra la escala del plano para ver el presupuesto en euros.</div>`;
+    return;
+  }
+  out.innerHTML = `
+    <div class="budget-cat">Demoliciones</div>
+    <div class="budget-row"><span class="label">Tirar tabique (${b.m.demM.toFixed(2)} m)</span><span class="val">${eur(b.detalle.demolicion)}</span></div>
+
+    <div class="budget-cat">Construcción</div>
+    <div class="budget-row"><span class="label">Muro nuevo (${b.m.muroM.toFixed(2)} m)</span><span class="val">${eur(b.detalle.muroMat)}</span></div>
+    <div class="budget-row"><span class="label">Pladur (${b.detalle.pladurM2.toFixed(1)} m²)</span><span class="val">${eur(b.detalle.pladurCost)}</span></div>
+    <div class="budget-row"><span class="label">Pintura (${b.detalle.pinturaM2.toFixed(1)} m²)</span><span class="val">${eur(b.detalle.pinturaCost)}</span></div>
+    <div class="budget-row"><span class="label">Tarima (${b.detalle.tarimaM2.toFixed(1)} m²)</span><span class="val">${eur(b.detalle.tarimaCost)}</span></div>
+    <div class="budget-row"><span class="label">Puertas (${b.m.puertaN} ud)</span><span class="val">${eur(b.detalle.puertasCost)}</span></div>
+
+    <div class="budget-cat">Instalaciones</div>
+    <div class="budget-row"><span class="label">Puntos de luz (${b.m.luzN})</span><span class="val">${eur(b.detalle.instalLuz)}</span></div>
+    <div class="budget-row"><span class="label">Puntos de agua (${b.m.aguaN})</span><span class="val">${eur(b.detalle.instalAgua)}</span></div>
+
+    <div class="budget-cat">Mano de obra estimada</div>
+    <div class="budget-row"><span class="label">Albañil (${b.detalle.horasAlbanil.toFixed(1)} h)</span><span class="val">${eur(b.detalle.moAlbanil)}</span></div>
+    <div class="budget-row"><span class="label">Electricista (${b.detalle.horasElec.toFixed(1)} h)</span><span class="val">${eur(b.detalle.moElec)}</span></div>
+    <div class="budget-row"><span class="label">Fontanero (${b.detalle.horasFont.toFixed(1)} h)</span><span class="val">${eur(b.detalle.moFont)}</span></div>
+
+    <div class="budget-row" style="margin-top:8px;"><span class="label">Coste total interno</span><span class="val">${eur(b.costeTotal)}</span></div>
+    <div class="budget-row"><span class="label">Margen aplicado</span><span class="val">${PRECIOS.margenPct}%</span></div>
+    <div class="budget-total"><span>PVP CLIENTE</span><span class="val">${eur(b.pvp)}</span></div>
+  `;
+}
+
+/* ============================================================
+   EDITOR DE PRECIOS
+   ============================================================ */
+function renderPriceEditor(){
+  const el = document.getElementById('priceEditor');
+  const fields = [
+    ['demolicionMetro','Demolición tabique (€/m)'],
+    ['muroMetro','Muro nuevo (€/m)'],
+    ['pladurM2','Pladur (€/m²)'],
+    ['pinturaM2','Pintura (€/m²)'],
+    ['tarimaM2','Tarima (€/m²)'],
+    ['puntoLuz','Punto de luz (€/ud)'],
+    ['puntoAgua','Punto de agua (€/ud)'],
+    ['puertaUd','Puerta (€/ud)'],
+    ['margenPct','Margen (%)'],
+  ];
+  let html = fields.map(([key,label])=>`
+    <div class="price-edit-row">
+      <span>${label}</span>
+      <input type="number" data-key="${key}" value="${PRECIOS[key]}" step="0.5">
+    </div>`).join('');
+
+  html += `<div class="budget-cat" style="margin-top:10px;">Coste/hora equipo</div>`;
+  EQUIPO_RECIBIDO.forEach((p,i)=>{
+    html += `<div class="price-edit-row">
+      <span>${p.name} (${p.role})</span>
+      <input type="number" data-equipo="${i}" value="${p.costeHora}" step="0.5">
+    </div>`;
+  });
+
+  el.innerHTML = html;
+  el.querySelectorAll('input[data-key]').forEach(inp=>{
+    inp.addEventListener('input', ()=>{
+      PRECIOS[inp.dataset.key] = parseFloat(inp.value)||0;
+      updateBudget();
+    });
+  });
+  el.querySelectorAll('input[data-equipo]').forEach(inp=>{
+    inp.addEventListener('input', ()=>{
+      EQUIPO_RECIBIDO[parseInt(inp.dataset.equipo)].costeHora = parseFloat(inp.value)||0;
+      updateBudget();
+    });
+  });
+}
+document.getElementById('togglePrices').addEventListener('click', ()=>{
+  const el = document.getElementById('priceEditor');
+  if(el.style.display==='none'){ el.style.display='block'; renderPriceEditor(); }
+  else el.style.display='none';
+});
+
+/* ============================================================
+   DOSSIER PARA CLIENTE
+   ============================================================ */
+function getBeforeCanvasDataUrl(){
+  // canvas blanco + sólo el fondo (sin dibujos)
+  const tmp = document.createElement('canvas');
+  tmp.width = bgCanvas.width; tmp.height = bgCanvas.height;
+  const ctx = tmp.getContext('2d');
+  ctx.fillStyle='#fff'; ctx.fillRect(0,0,tmp.width,tmp.height);
+  if(state.bgImage) ctx.drawImage(state.bgImage,0,0,tmp.width,tmp.height);
+  return tmp.toDataURL('image/png');
+}
+
+function getAfterCanvasDataUrl(){
+  const tmp = document.createElement('canvas');
+  tmp.width = bgCanvas.width; tmp.height = bgCanvas.height;
+  const ctx = tmp.getContext('2d');
+  ctx.fillStyle='#fff'; ctx.fillRect(0,0,tmp.width,tmp.height);
+  if(state.bgImage){
+    ctx.globalAlpha = state.bgOpacity;
+    ctx.drawImage(state.bgImage,0,0,tmp.width,tmp.height);
+    ctx.globalAlpha = 1;
+  }
+  ctx.drawImage(drawCanvas,0,0,tmp.width,tmp.height);
+  return tmp.toDataURL('image/png');
+}
+
+document.getElementById('btnDossier').addEventListener('click', ()=>{
+  if(!state.bgImage && !state.blankMode){ toast('Sube primero un plano o usa "✏️ Dibujar desde cero" (paso 1).', 'warn'); return; }
+  document.getElementById('dossierBefore').src = getBeforeCanvasDataUrl();
+  document.getElementById('dossierAfter').src = getAfterCanvasDataUrl();
+
+  const b = calcBudget();
+  let html = '';
+  if(b.valid){
+    html = `
+      <div class="budget-row"><span class="label">Demoliciones</span><span class="val">${eur(b.demoliciones)}</span></div>
+      <div class="budget-row"><span class="label">Construcción</span><span class="val">${eur(b.construccion)}</span></div>
+      <div class="budget-row"><span class="label">Instalaciones</span><span class="val">${eur(b.instalaciones)}</span></div>
+      <div class="budget-row"><span class="label">Mano de obra</span><span class="val">${eur(b.manoObraTotal)}</span></div>
+      <div class="budget-total"><span>PVP TOTAL</span><span class="val">${eur(b.pvp)}</span></div>
+    `;
+  } else {
+    html = '<div>⚠️ Calibra la escala del plano para incluir el presupuesto en euros.</div>';
+  }
+  document.getElementById('dossierBudget').innerHTML = html;
+  document.getElementById('dossierOverlay').classList.add('open');
+});
+document.getElementById('closeDossier').addEventListener('click', ()=>{
+  document.getElementById('dossierOverlay').classList.remove('open');
+});
+document.getElementById('btnDownloadDossier').addEventListener('click', ()=>{
+  ['dossierBefore','dossierAfter'].forEach((id,i)=>{
+    const a = document.createElement('a');
+    a.href = document.getElementById(id).src;
+    a.download = (i===0?'antes':'despues')+'_'+(state.obraId||'plano')+'.png';
+    a.click();
+  });
+});
+
+/* ============================================================
+   CONEXIÓN BIDIRECCIONAL CON "LUBENEC CONTIGO"
+   ============================================================ */
+
+// --- ENTRADA: recibir datos de la app madre ---
+window.addEventListener('message', (event)=>{
+  const data = event.data;
+  if(!data || !data.type) return;
+
+  if(data.type === 'LUBENEC_START_BLANK'){
+    // Petición desde Lubenec Contigo para arrancar en modo "Dibujar desde cero"
+    // sin depender de acceder al DOM del iframe (funciona aunque el iframe
+    // todavía no estuviera cargado del todo cuando se pulsó el botón).
+    activateBlankMode();
+    return;
+  }
+
+  if(data.type !== 'LUBENEC_INIT_DISENO') return;
+
+  state.obraId = data.obraId || null;
+  state.obraName = data.obraName || '';
+  state.cliente = data.cliente || '';
+
+  if(Array.isArray(data.equipo) && data.equipo.length){
+    // Mapear EQUIPO recibido (sin costeHora) a estructura con costes por defecto si faltan
+    EQUIPO_RECIBIDO = data.equipo.map(p=>({
+      name: p.name, role: p.role,
+      costeHora: p.costeHora ?? EQUIPO_RECIBIDO.find(d=>d.role===p.role)?.costeHora ?? 25
+    }));
+  }
+
+  document.getElementById('connStatus').textContent = `✅ Conectado: ${state.obraName || state.obraId || 'Obra'}`;
+  document.getElementById('connStatus').classList.add('ok');
+
+  // Si llega un plano adjunto (PDF o imagen) codificado en base64 dataURL
+  if(data.planoDataUrl){
+    loadPlanFromDataUrl(data.planoDataUrl, !!data.planoIsPdf);
+  }
+});
+
+// Avisar a la ventana padre que estamos listos para recibir datos
+if(window.opener){
+  window.opener.postMessage({type:'LUBENEC_DESIGNER_READY'}, '*');
+} else if(window.parent !== window){
+  window.parent.postMessage({type:'LUBENEC_DESIGNER_READY'}, '*');
+}
+
+// --- SALIDA: enviar presupuesto + capturas a la app madre ---
+document.getElementById('btnSend').addEventListener('click', ()=>{
+  if(!state.bgImage && !state.blankMode){ toast('Sube y diseña un plano antes de enviar (paso 1).', 'warn'); return; }
+  const b = calcBudget();
+
+  const payload = {
+    type: 'LUBENEC_DESIGN_RESULT',
+    obraId: state.obraId,
+    obraName: state.obraName,
+    cliente: state.cliente,
+    timestamp: new Date().toISOString(),
+    presupuesto: b.valid ? {
+      demoliciones: b.demoliciones,
+      construccion: b.construccion,
+      instalaciones: b.instalaciones,
+      manoObra: b.manoObraTotal,
+      costeTotal: b.costeTotal,
+      pvp: b.pvp,
+      margenPct: PRECIOS.margenPct,
+      mediciones: b.m,
+      detalle: b.detalle,
+    } : null,
+    imagenAntes: getBeforeCanvasDataUrl(),
+    imagenDespues: getAfterCanvasDataUrl(),
+    elementos: state.elements,
+    escala: state.scalePxPerMeter,
+  };
+
+  const target = window.opener || window.parent;
+  if(target && target !== window){
+    target.postMessage(payload, '*');
+    document.getElementById('connStatus').textContent = '✅ Enviado a Lubenec Contigo';
+    toast('Presupuesto y capturas enviados a Lubenec Contigo.', 'ok');
+  } else {
+    toast('No se ha detectado la ventana de Lubenec Contigo. Abre esta app desde "Iniciar Diseño".', 'warn');
+    console.log('Payload generado:', payload);
+  }
+});
+
+/* ============================================================
+   VISTA 3D (Three.js)
+   ============================================================ */
+let scene3D=null, camera3D=null, renderer3D=null, controls3D=null, raf3D=null;
+const WALL_H_M = 2.5;      // alto genérico de los muros en metros
+const DOOR_H_M = 2.05;     // alto genérico de las puertas en metros
+
+function ensureRenderer3D(){
+  if(renderer3D) return;
+  const canvas = document.getElementById('canvas3D');
+  renderer3D = new THREE.WebGLRenderer({canvas, antialias:true});
+  renderer3D.setPixelRatio(Math.min(window.devicePixelRatio||1, 2));
+  scene3D = new THREE.Scene();
+  scene3D.background = new THREE.Color(0x0a0907);
+
+  camera3D = new THREE.PerspectiveCamera(50, 1, 0.1, 500);
+  controls3D = new THREE.OrbitControls(camera3D, renderer3D.domElement);
+  controls3D.enableDamping = true;
+  controls3D.dampingFactor = 0.08;
+  controls3D.maxPolarAngle = Math.PI/2 - 0.02;
+
+  const hemi = new THREE.HemisphereLight(0xffffff, 0x2a2620, 0.9);
+  scene3D.add(hemi);
+  const dir = new THREE.DirectionalLight(0xffffff, 0.9);
+  dir.position.set(8,14,6);
+  scene3D.add(dir);
+  const dir2 = new THREE.DirectionalLight(0xffffff, 0.35);
+  dir2.position.set(-6,10,-8);
+  scene3D.add(dir2);
+}
+
+/* Convierte una coordenada de plano (px) a coordenadas 3D (metros), con Y=0 en el suelo.
+   El eje Y del canvas 2D se mapea al eje Z de la escena 3D (planta vista desde arriba). */
+function toScene(xPx,yPx,scale){
+  return { x: xPx/scale, z: yPx/scale };
+}
+
+function buildScene3D(){
+  ensureRenderer3D();
+  // Limpia objetos previos (conserva las luces)
+  [...scene3D.children].forEach(obj=>{
+    if(obj.isLight) return;
+    scene3D.remove(obj);
+    if(obj.geometry) obj.geometry.dispose();
+    if(obj.material){ if(Array.isArray(obj.material)) obj.material.forEach(m=>m.dispose()); else obj.material.dispose(); }
+  });
+
+  const scale = state.scalePxPerMeter || 60; // px por metro (usa un valor por defecto si no está calibrado)
+  const wPx = bgCanvas.width || 800, hPx = bgCanvas.height || 600;
+  const planW = wPx/scale, planH = hPx/scale;
+
+  // Suelo
+  const floorGeo = new THREE.PlaneGeometry(planW, planH);
+  const floorMat = new THREE.MeshStandardMaterial({color:0xEDE7DA, roughness:0.9});
+  const floor = new THREE.Mesh(floorGeo, floorMat);
+  floor.rotation.x = -Math.PI/2;
+  floor.position.set(planW/2, 0, planH/2);
+  scene3D.add(floor);
+
+  const grid = new THREE.GridHelper(Math.max(planW,planH)*1.4, Math.round(Math.max(planW,planH)*1.4), 0x3A352D, 0x2A2620);
+  grid.position.set(planW/2, 0.01, planH/2);
+  scene3D.add(grid);
+
+  // Muros: plano base (existente que se conserva) y muro nuevo
+  state.elements.forEach(el=>{
+    if(el.tool==='planoBase' || el.tool==='muro'){
+      const p1 = toScene(el.x1, el.y1, scale);
+      const p2 = toScene(el.x2, el.y2, scale);
+      const len = Math.hypot(p2.x-p1.x, p2.z-p1.z);
+      if(len < 0.02) return;
+      const thickness = 0.15;
+      const geo = new THREE.BoxGeometry(len, WALL_H_M, thickness);
+      const color = el.tool==='muro' ? 0x059669 : 0x9c9689;
+      const mat = new THREE.MeshStandardMaterial({color, roughness:0.85});
+      const mesh = new THREE.Mesh(geo, mat);
+      const midX=(p1.x+p2.x)/2, midZ=(p1.z+p2.z)/2;
+      mesh.position.set(midX, WALL_H_M/2, midZ);
+      mesh.rotation.y = -Math.atan2(p2.z-p1.z, p2.x-p1.x);
+      scene3D.add(mesh);
+    } else if(el.tool==='puerta'){
+      const p1 = toScene(el.x1, el.y1, scale);
+      const p2 = toScene(el.x2, el.y2, scale);
+      const len = Math.hypot(p2.x-p1.x, p2.z-p1.z);
+      if(len < 0.02) return;
+      const geo = new THREE.BoxGeometry(len, DOOR_H_M, 0.05);
+      const mat = new THREE.MeshStandardMaterial({color:0xD97706, roughness:0.6});
+      const mesh = new THREE.Mesh(geo, mat);
+      const midX=(p1.x+p2.x)/2, midZ=(p1.z+p2.z)/2;
+      mesh.position.set(midX, DOOR_H_M/2, midZ);
+      mesh.rotation.y = -Math.atan2(p2.z-p1.z, p2.x-p1.x);
+      scene3D.add(mesh);
+    }
+  });
+
+  // Mobiliario
+  state.elements.forEach(el=>{
+    if(el.tool!=='mobiliario') return;
+    const minX=Math.min(el.x1,el.x2), maxX=Math.max(el.x1,el.x2);
+    const minY=Math.min(el.y1,el.y2), maxY=Math.max(el.y1,el.y2);
+    const wM = (maxX-minX)/scale, dM = (maxY-minY)/scale;
+    if(wM<0.02 || dM<0.02) return;
+    const info = FURNITURE_CATALOG.find(f=>f.id===el.furnitureType) || {heightM:0.8, emoji:'🔲', label:'Mueble'};
+    const hM = info.heightM || 0.8;
+    const cx=(minX+maxX)/2, cy=(minY+maxY)/2;
+    const centerScene = toScene(cx, cy, scale);
+
+    const geo = new THREE.BoxGeometry(wM, hM, dM);
+    const mat = new THREE.MeshStandardMaterial({color:0x9333EA, roughness:0.7, metalness:0.05});
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.position.set(centerScene.x, hM/2, centerScene.z);
+    // el rotation del elemento gira en sentido "pantalla" (x hacia la derecha, y hacia abajo);
+    // en la escena 3D con Y-arriba esto corresponde a girar en torno a Y en sentido opuesto.
+    mesh.rotation.y = -(el.rotation || 0);
+    scene3D.add(mesh);
+
+    // borde para distinguir mejor las piezas
+    const edges = new THREE.EdgesGeometry(geo);
+    const line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({color:0x1E1B16}));
+    line.position.copy(mesh.position);
+    line.rotation.copy(mesh.rotation);
+    scene3D.add(line);
+  });
+
+  // Cámara inicial: vista en perspectiva desde una esquina, mirando al centro del plano
+  const center = new THREE.Vector3(planW/2, 0, planH/2);
+  const dist = Math.max(planW, planH, 3) * 0.9;
+  camera3D.position.set(center.x + dist, dist*0.85, center.z + dist);
+  controls3D.target.copy(center);
+  controls3D.update();
+
+  return true;
+}
+
+function resize3D(){
+  const container = document.getElementById('view3DContainer');
+  if(!container || !renderer3D || !camera3D) return;
+  const w = container.clientWidth, h = container.clientHeight;
+  if(w<=0 || h<=0) return;
+  renderer3D.setSize(w,h,false);
+  camera3D.aspect = w/h;
+  camera3D.updateProjectionMatrix();
+}
+
+function animate3D(){
+  raf3D = requestAnimationFrame(animate3D);
+  if(controls3D){
+    controls3D.autoRotate = document.getElementById('autoRotate3D').checked;
+    controls3D.autoRotateSpeed = 1.6;
+    controls3D.update();
+  }
+  if(renderer3D && scene3D && camera3D) renderer3D.render(scene3D, camera3D);
+}
+
+function open3DView(){
+  const hasContent = (state.bgImage || state.blankMode) && state.elements.some(e=>e.tool!=='calibrate');
+  const emptyMsg = document.getElementById('view3DEmpty');
+  document.getElementById('view3DOverlay').classList.add('open');
+  if(!hasContent){
+    emptyMsg.style.display = 'flex';
+    return;
+  }
+  emptyMsg.style.display = 'none';
+  if(!state.scalePxPerMeter){
+    toast('El plano no está calibrado: la vista 3D usará una escala aproximada.', 'warn');
+  }
+  buildScene3D();
+  requestAnimationFrame(()=>{ resize3D(); });
+  if(!raf3D) animate3D();
+}
+
+function close3DView(){
+  document.getElementById('view3DOverlay').classList.remove('open');
+  if(raf3D){ cancelAnimationFrame(raf3D); raf3D=null; }
+}
+
+document.getElementById('btn3DView').addEventListener('click', open3DView);
+document.getElementById('closeView3D').addEventListener('click', close3DView);
+document.getElementById('btnReset3DCam').addEventListener('click', ()=>{ if(scene3D) buildScene3D(); });
+window.addEventListener('resize', ()=>{ if(document.getElementById('view3DOverlay').classList.contains('open')) resize3D(); });
+
+/* Init */
+updateMeasureSummary();
+updateBudget();
+updateWorkflowStep();
+</script>
+</body>
+</html>
